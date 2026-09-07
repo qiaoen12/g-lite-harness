@@ -14,7 +14,7 @@ worktree：/Users/qiaoen/ceshi-worktrees
 ```bash
 bin/ceshi doctor
 bin/ceshi status
-bin/ceshi start 40          # 或不写号，取 G-lite 下一个 OPEN
+bin/ceshi start 40          # 或不写号，取 G-lite 下一个 OPEN+human-merge
 ```
 
 然后 `cd` 到打印出来的 worktree，用普通 git 改目标仓。

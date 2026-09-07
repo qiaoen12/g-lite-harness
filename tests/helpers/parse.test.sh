@@ -3,6 +3,8 @@ set -Eeuo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=/dev/null
 . "$ROOT/lib/parse.sh"
+need_cmd() { command -v "$1" >/dev/null || { echo "缺少 $1" >&2; exit 1; }; }
+need_cmd jq
 
 fail=0
 pass=0

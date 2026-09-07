@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# 用目标仓当前 zmerge 代码，对真实 GitHub squash 做 #40 A1–A3。
-# 代码来自 CESHI_SUT_CODE（有 worktree 用 worktree，否则用 Projects2 main）。
+# 真实 GitHub + 生产 zmerge_delete_remote_branch 的集成测试（#40 A1–A3）。
+# 不是完整 zmerge_run。代码来自 CESHI_SUT_CODE。
 # 当前 main 的祖先检查会让 A1 失败，这就是 #40 要修的。
 set -Eeuo pipefail
 
@@ -68,7 +68,7 @@ if [ "$a1rc" = 0 ]; then
   e2e_expect_true "40-A1 porcelain deleted" 'grep -Fq "porcelain=deleted" "$E2E_TMP/a1.out"'
   e2e_expect_true "40-A1 远端已无分支" \
     '! git -C "$E2E_TMP/wt" ls-remote --exit-code origin "refs/heads/${br1}" >/dev/null 2>&1'
-  E2E_BRANCHES="${E2E_BRANCHES// $br1/}"
+  e2e_forget "$br1"
 else
   e2e_bad "40-A1 期望删除成功，rc=${a1rc} reason=${METRICS_REASON_CODE:-空}"
   echo "---- a1.err ----" >&2
@@ -92,6 +92,7 @@ git -C "$E2E_TMP/other" add "e2e-runs/${br2}/note.txt"
 git -C "$E2E_TMP/other" commit -qm "e2e: advance after squash"
 git -C "$E2E_TMP/other" push -q origin "HEAD:refs/heads/${br2}"
 moved="$(git -C "$E2E_TMP/other" rev-parse HEAD)"
+e2e_remember_tip "$br2" "$moved"
 git -C "$E2E_TMP/wt" fetch -q origin "$br2"
 setup_z_for "$E2E_TMP/wt" "$br2"
 a2rc=0
@@ -104,7 +105,7 @@ e2e_expect_eq "40-A2 新 tip 仍在" "$moved" "$now2"
 br3="$(e2e_name zmerge-a3)"
 main_tip="$(git -C "$E2E_TMP/wt" rev-parse "origin/${SANDBOX_MAIN}")"
 git -C "$E2E_TMP/wt" push -q origin "${main_tip}:refs/heads/${br3}"
-e2e_register "$br3"
+e2e_register "$br3" "$main_tip"
 setup_z_for "$E2E_TMP/wt" "$br3"
 a3rc=0
 zmerge_delete_remote_branch >"$E2E_TMP/a3.out" 2>"$E2E_TMP/a3.err" || a3rc=$?
@@ -113,7 +114,7 @@ e2e_expect_true "40-A3 porcelain deleted" 'grep -Fq "porcelain=deleted" "$E2E_TM
 e2e_expect_true "40-A3 远端已无分支" \
   '! git -C "$E2E_TMP/wt" ls-remote --exit-code origin "refs/heads/${br3}" >/dev/null 2>&1'
 if [ "$a3rc" = 0 ]; then
-  E2E_BRANCHES="${E2E_BRANCHES// $br3/}"
+  e2e_forget "$br3"
 fi
 
 e2e_finish

@@ -30,6 +30,7 @@ git -C "$E2E_TMP/other" add "e2e-runs/${br}/note.txt"
 git -C "$E2E_TMP/other" commit -qm "e2e: advance ${br}"
 git -C "$E2E_TMP/other" push -q origin "HEAD:refs/heads/${br}"
 new_tip="$(git -C "$E2E_TMP/other" rev-parse HEAD)"
+e2e_remember_tip "$br" "$new_tip"
 
 rc=0
 git -C "$E2E_TMP/wt" push --porcelain \
@@ -43,7 +44,7 @@ e2e_expect_eq "推进后的 tip 仍在" "$new_tip" "$now"
 git -C "$E2E_TMP/wt" push --porcelain \
   --force-with-lease="refs/heads/${br}:${new_tip}" \
   origin ":refs/heads/${br}" >/dev/null
-E2E_BRANCHES=""
+e2e_forget "$br"
 e2e_expect_true "正确 lease 可以删除" \
   '! git -C "$E2E_TMP/wt" ls-remote --exit-code origin "refs/heads/${br}" >/dev/null 2>&1'
 

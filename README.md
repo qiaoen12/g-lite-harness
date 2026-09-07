@@ -32,13 +32,13 @@ bin/ceshi review 40
 bin/ceshi stop
 ```
 
-`test facts` 和 `test zmerge` 会在 `qiaoen12/ceshi` 上开 `e2e/*` 分支、PR、squash。不会碰 Project-qiaoen 的分支。
+`test facts` 会在 `qiaoen12/ceshi` 上开 `e2e/*` 分支、PR、squash。`test zmerge` 只集成测试 `zmerge_delete_remote_branch`，不是完整 `zmerge_run`。两者都不会碰 Project-qiaoen 的分支。沙箱仓写死为 `qiaoen12/ceshi`，环境变量改不了。
 
-沙箱 `main` 还没有提交时，先把本仓库 push 上去。
+`start` / `draft` / `review` 要求 Issue 仍是 OPEN 且带 `human-merge`。`review` 还要求恰好一个 Draft PR，且 `headRefOid` 等于 worktree HEAD。
 
 ## 本机覆盖
 
-复制下面这样写到 `config.local.sh`（已忽略）：
+`config.local.sh`（已忽略）只能改目标仓路径。不能改沙箱仓。
 
 ```bash
 SUT_ROOT=/Users/qiaoen/Projects2

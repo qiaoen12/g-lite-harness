@@ -79,7 +79,7 @@ cmd_start() {
   issue_number_ok "$n" || die "Issue 号不合法：$n"
   cmd_doctor >/dev/null
   json="$(sut_issue_json "$n")" || die "读不到 ${SUT_REPO}#${n}"
-  [ "$(printf '%s' "$json" | jq -r .state)" = OPEN ] || die "${SUT_REPO}#${n} 不是 OPEN"
+  require_open_human_merge "$json" "$n"
   body="$(printf '%s' "$json" | jq -r .body)"
   branch="$(issue_suggested_branch "$body")"
   if [ -z "$branch" ]; then
@@ -146,8 +146,10 @@ cmd_worktree() {
 }
 
 cmd_draft() {
-  local n="${1:-}" wt branch title url
+  local n="${1:-}" wt branch title url json
   issue_number_ok "${n:-}" || die "用法：ceshi draft <Issue号>"
+  json="$(sut_issue_json "$n")" || die "读不到 ${SUT_REPO}#${n}"
+  require_open_human_merge "$json" "$n"
   wt="$(worktree_find "$n")" || die "先 ceshi start ${n}"
   [ -z "$(git -C "$wt" status --porcelain)" ] || die "工作树不干净：$wt"
   branch="$(worktree_branch "$wt")"
@@ -156,7 +158,7 @@ cmd_draft() {
   if git -C "$wt" merge-base --is-ancestor HEAD "origin/${SUT_MAIN}"; then
     die "HEAD 已在 origin/${SUT_MAIN} 上，没有可交付提交"
   fi
-  title="$(gh_json issue view "$n" --repo "$SUT_REPO" --json title -q .title)"
+  title="$(printf '%s' "$json" | jq -r .title)"
   git -C "$wt" push -u origin "HEAD:refs/heads/${branch}"
   url="$(gh_json pr create --repo "$SUT_REPO" --draft \
     --base "$SUT_MAIN" \
@@ -184,20 +186,25 @@ EOF
 }
 
 cmd_review() {
-  local n="${1:-}" wt head title
+  local n="${1:-}" wt head title json branch pr pr_num pr_url
   issue_number_ok "${n:-}" || die "用法：ceshi review <Issue号>"
-  wt="$(worktree_find "$n" || true)"
-  if [ -n "$wt" ]; then
-    head="$(git -C "$wt" rev-parse HEAD)"
-  else
-    head="（没有 worktree，先 ceshi start ${n}）"
-  fi
-  title="$(gh_json issue view "$n" --repo "$SUT_REPO" --json title -q .title 2>/dev/null || echo "")"
+  json="$(sut_issue_json "$n")" || die "读不到 ${SUT_REPO}#${n}"
+  require_open_human_merge "$json" "$n"
+  wt="$(worktree_find "$n")" || die "先 ceshi start ${n}"
+  [ -z "$(git -C "$wt" status --porcelain)" ] || die "工作树不干净：$wt"
+  head="$(git -C "$wt" rev-parse HEAD)"
+  branch="$(worktree_branch "$wt")"
+  pr="$(require_matching_draft_pr "$branch" "$head")"
+  pr_num="$(printf '%s' "$pr" | jq -r .number)"
+  pr_url="$(printf '%s' "$pr" | jq -r .url)"
+  title="$(printf '%s' "$json" | jq -r .title)"
   export CESHI_TPL_ISSUE="$n"
   export CESHI_TPL_SUT_REPO="$SUT_REPO"
-  export CESHI_TPL_WORKTREE="${wt:-无}"
+  export CESHI_TPL_WORKTREE="$wt"
   export CESHI_TPL_HEAD="$head"
   export CESHI_TPL_TITLE="$title"
+  export CESHI_TPL_PR="#${pr_num}"
+  export CESHI_TPL_PR_URL="$pr_url"
   echo "====== 审查卡 ======"
   fill_prompt "$CESHI_ROOT/prompts/review.md"
   if [ -n "$wt" ] && [ -x "$wt/0-meta/audit/scripts/check-commit-msg.sh" ] && [ -n "$title" ]; then
@@ -221,7 +228,10 @@ cmd_test() {
   local kind="${1:-}" 
   shift || true
   case "$kind" in
-    helpers) bash "$CESHI_ROOT/tests/helpers/parse.test.sh" ;;
+    helpers)
+      bash "$CESHI_ROOT/tests/helpers/parse.test.sh"
+      bash "$CESHI_ROOT/tests/helpers/guard.test.sh"
+      ;;
     local) cmd_test_local "$@" ;;
     facts) cmd_test_facts "$@" ;;
     zmerge) cmd_test_zmerge "$@" ;;
@@ -283,7 +293,8 @@ cmd_test_zmerge() {
   fi
   CESHI_SUT_CODE="$(sut_code_root "$n")"
   export CESHI_SUT_CODE
-  echo "zmerge 代码来自：$CESHI_SUT_CODE"
+  echo "删除函数来自：$CESHI_SUT_CODE"
+  echo "范围：zmerge_delete_remote_branch 的真实 GitHub 集成测试，不是完整 zmerge_run。"
   bash "$CESHI_ROOT/tests/e2e/run.sh" zmerge
 }
 

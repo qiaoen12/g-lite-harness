@@ -11,6 +11,11 @@ if [ -f "$CESHI_ROOT/config.local.sh" ]; then
   . "$CESHI_ROOT/config.local.sh"
 fi
 
+# 破坏性 GitHub 目标不可配置。环境变量和 config.local.sh 都不能改。
+SANDBOX_REPO="qiaoen12/ceshi"
+SANDBOX_MAIN="main"
+E2E_BRANCH_PREFIX="e2e/"
+
 c_ok()   { printf '%s\n' "$*"; }
 c_err()  { printf '%s\n' "$*" >&2; }
 die()    { c_err "$*"; exit 1; }
@@ -53,7 +58,7 @@ ceshi <命令>
   test helpers        解析器自测，不上网
   test local [n]      在目标 worktree 跑夹具
   test facts          在 qiaoen12/ceshi 上测真实 squash / lease
-  test zmerge [n]     用目标仓当前 zmerge 代码打真实 squash 删分支
+  test zmerge [n]     真实 GitHub 上测 zmerge_delete_remote_branch（不是完整 zmerge_run）
   next                开工队列里下一个未关闭 Issue
 
 目标仓只许本地改。沙箱仓只许打 e2e/* 分支。

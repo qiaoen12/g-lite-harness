@@ -33,16 +33,48 @@ e2e_setup() {
   git -C "$E2E_TMP/wt" pull -q --ff-only origin "$SANDBOX_MAIN"
 }
 
+e2e_tip_file() {
+  printf '%s/tips/%s\n' "$E2E_TMP" "$(printf '%s' "$1" | tr '/' '_')"
+}
+
+e2e_remember_tip() {
+  local br="$1" tip="$2"
+  require_e2e_branch "$br"
+  [ -n "$tip" ] || die "登记 ${br} 时没有 tip"
+  mkdir -p "$E2E_TMP/tips"
+  printf '%s\n' "$tip" > "$(e2e_tip_file "$br")"
+  case " $E2E_BRANCHES " in
+    *" $br "*) ;;
+    *) E2E_BRANCHES="$E2E_BRANCHES $br" ;;
+  esac
+}
+
 e2e_register() {
-  require_e2e_branch "$1"
-  E2E_BRANCHES="$E2E_BRANCHES $1"
+  local br="$1" tip="${2:-}"
+  if [ -z "$tip" ]; then
+    tip="$(git -C "$E2E_TMP/wt" ls-remote origin "refs/heads/${br}" | awk '{print $1; exit}')"
+  fi
+  e2e_remember_tip "$br" "$tip"
+}
+
+e2e_forget() {
+  local br="$1" out="" x
+  for x in $E2E_BRANCHES; do
+    [ "$x" = "$br" ] || out="$out $x"
+  done
+  E2E_BRANCHES="${out# }"
 }
 
 e2e_cleanup() {
-  local br
+  local br tip
   if [ -n "${E2E_TMP:-}" ] && [ -d "${E2E_TMP}/wt" ]; then
     for br in $E2E_BRANCHES; do
-      git -C "$E2E_TMP/wt" push --quiet origin ":refs/heads/${br}" 2>/dev/null || true
+      tip=""
+      [ -f "$(e2e_tip_file "$br")" ] && tip="$(cat "$(e2e_tip_file "$br")")"
+      [ -n "$tip" ] || continue
+      git -C "$E2E_TMP/wt" push --quiet --porcelain \
+        --force-with-lease="refs/heads/${br}:${tip}" \
+        origin ":refs/heads/${br}" 2>/dev/null || true
     done
   fi
   if [ -n "${E2E_TMP:-}" ] && [ -d "$E2E_TMP" ]; then
@@ -64,7 +96,7 @@ e2e_push_branch() {
   git -C "$wt" add "$file"
   git -C "$wt" commit -qm "e2e: $br"
   git -C "$wt" push -q origin "HEAD:refs/heads/${br}"
-  e2e_register "$br"
+  e2e_register "$br" "$(git -C "$wt" rev-parse HEAD)"
 }
 
 e2e_pr_squash_keep_branch() {

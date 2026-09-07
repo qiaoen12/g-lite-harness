@@ -16,7 +16,7 @@ bin/ceshi stop
 
 `test facts` 必须绿：证明 GitHub squash 后 tip 不在 main 历史上。
 
-`test zmerge` 用这个 worktree 里的 merge-lib，对真实 squash 跑 A1–A3：
+`test zmerge` 调用这个 worktree 里的 `zmerge_delete_remote_branch`（覆盖了 `task_branch_pushable` / `z_fetch_origin_main`），对真实 squash 跑 A1–A3。它不是完整 `zmerge_run` E2E：
 
 | 项 | 期望 |
 | --- | --- |

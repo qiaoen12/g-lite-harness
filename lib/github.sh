@@ -32,9 +32,42 @@ sandbox_has_main_commit() {
 
 require_sandbox_repo() {
   local got
-  got="$(sandbox_name_with_owner)" || die "读不到沙箱仓 ${SANDBOX_REPO}"
-  [ "$got" = "$SANDBOX_REPO" ] || die "沙箱仓实际是 ${got}，配置是 ${SANDBOX_REPO}"
+  [ "$SANDBOX_REPO" = qiaoen12/ceshi ] \
+    || die "破坏性 E2E 只允许 qiaoen12/ceshi"
+  [ "$E2E_BRANCH_PREFIX" = 'e2e/' ] \
+    || die "破坏性 E2E 只允许 e2e/* 分支"
+  got="$(sandbox_name_with_owner)" || die "读不到沙箱仓 qiaoen12/ceshi"
+  [ "$got" = qiaoen12/ceshi ] \
+    || die "沙箱仓实际是 ${got}，必须是 qiaoen12/ceshi"
   [ "$got" != "$SUT_REPO" ] || die "拒绝：沙箱仓不能等于目标仓 ${SUT_REPO}"
+}
+
+require_open_human_merge() {
+  local json="$1" n="$2" rc=0
+  issue_open_human_merge_ok "$json" || rc=$?
+  case "$rc" in
+    0) return 0 ;;
+    1) die "${SUT_REPO}#${n} 不是 OPEN" ;;
+    *) die "${SUT_REPO}#${n} 没有 human-merge，拒绝" ;;
+  esac
+}
+
+sut_open_prs_for_head() {
+  local head="$1"
+  gh_json pr list --repo "$SUT_REPO" --head "$head" --base "$SUT_MAIN" \
+    --state open --json number,url,title,isDraft,headRefOid
+}
+
+require_matching_draft_pr() {
+  local branch="$1" head="$2" js n draft oid
+  js="$(sut_open_prs_for_head "$branch")" || die "读不到 ${SUT_REPO} 的 PR 列表"
+  n="$(printf '%s' "$js" | jq 'length')"
+  [ "$n" = 1 ] || die "需要恰好一个 head=${branch} base=${SUT_MAIN} 的开放 PR，实际 ${n}"
+  draft="$(printf '%s' "$js" | jq -r '.[0].isDraft')"
+  [ "$draft" = true ] || die "PR 不是 Draft（isDraft=${draft}），拒绝审查"
+  oid="$(printf '%s' "$js" | jq -r '.[0].headRefOid')"
+  [ "$oid" = "$head" ] || die "PR headRefOid=${oid} 与 worktree HEAD=${head} 不一致"
+  printf '%s' "$js" | jq -c '.[0]'
 }
 
 require_e2e_confirm() {

@@ -29,9 +29,23 @@ issue_suggested_sparse() {
   '
 }
 
+issue_label_names() {
+  printf '%s' "$1" | jq -r '.labels[] | if type == "object" then .name else . end'
+}
+
 issue_has_human_merge() {
   local labels="$1"
   printf '%s\n' "$labels" | grep -qx 'human-merge'
+}
+
+issue_is_open() {
+  [ "$(printf '%s' "$1" | jq -r .state)" = OPEN ]
+}
+
+issue_open_human_merge_ok() {
+  local json="$1"
+  issue_is_open "$json" || return 1
+  issue_has_human_merge "$(issue_label_names "$json")" || return 2
 }
 
 branch_ok() {
