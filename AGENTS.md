@@ -1,12 +1,12 @@
-# ceshi
+# g-lite-harness
 
 外部控制台和 GitHub 测试场。真正改代码的是本机 Project-qiaoen clone。
 
 ```text
-控制仓：/Users/qiaoen/ceshi
+控制仓：/Users/qiaoen/g-lite-harness
 目标仓：/Users/qiaoen/Projects2          （qiaoen12/Project-qiaoen）
 worktree：/Users/qiaoen/ceshi-worktrees
-沙箱仓：qiaoen12/ceshi（E2E squash 进 e2e/base，不写 main）
+沙箱仓：qiaoen12/g-lite-harness（E2E squash 进 e2e/base，不写 main）
 ```
 
 ## 每次开工先做
@@ -24,8 +24,8 @@ bin/ceshi start 40          # 或不写号，取 G-lite 下一个 OPEN+human-mer
 - 不要用目标仓正在开发的 `new task approve` / claim / `zdev` / `zreview` / `zmerge` / `zsync` / `zpr` 管理框架自己。
 - 不要通过 GitHub API 一行一行改 Project-qiaoen。
 - 不要在 `/Users/qiaoen/Projects2-worktrees` 里的 Orca 树上做 G-lite。
-- 不要把目标仓代码搬进 ceshi。
-- 真实 GitHub 破坏性测试只打 `qiaoen12/ceshi` 的 `e2e/*` 分支。
+- 不要把目标仓代码搬进 g-lite-harness。
+- 真实 GitHub 破坏性测试只打 `qiaoen12/g-lite-harness` 的 `e2e/*` 分支。
 
 ## 允许
 
@@ -42,4 +42,4 @@ AI 审查（本控制台的 review，不是 zreview）
 
 ## 停
 
-Draft PR 和审查之后必须停。不要 squash merge Project-qiaoen。等人看完契约、diff、夹具和 ceshi 真实 GitHub 结果。
+Draft PR 和审查之后必须停。不要 squash merge Project-qiaoen。等人看完契约、diff、夹具和 g-lite-harness 真实 GitHub 结果。

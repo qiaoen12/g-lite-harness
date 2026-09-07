@@ -6,7 +6,7 @@
 
 - 在 ceshi-worktrees 里改目标仓
 - 本地夹具
-- 在 qiaoen12/ceshi 上跑真实 squash / lease
+- 在 qiaoen12/g-lite-harness 上跑真实 squash / lease
 - 目标仓 Draft PR
 - AI 审查意见
 

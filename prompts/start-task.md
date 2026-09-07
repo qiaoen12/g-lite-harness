@@ -9,7 +9,7 @@
 分支：{{BRANCH}}
 ```
 
-在 worktree 里改代码。不要在 ceshi 里复制目标仓源码。
+在 worktree 里改代码。不要在 g-lite-harness 里复制目标仓源码。
 
 本阶段框架任务用：
 

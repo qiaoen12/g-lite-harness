@@ -20,7 +20,7 @@ E2E_BRANCH_PREFIX=tmp/
 
 eq "SUT_REPO 不可覆盖" qiaoen12/Project-qiaoen "$SUT_REPO"
 eq "SUT_MAIN 不可覆盖" main "$SUT_MAIN"
-eq "SANDBOX_REPO 不可覆盖" qiaoen12/ceshi "$SANDBOX_REPO"
+eq "SANDBOX_REPO 不可覆盖" qiaoen12/g-lite-harness "$SANDBOX_REPO"
 eq "SANDBOX_MAIN 不可覆盖" e2e/base "$SANDBOX_MAIN"
 eq "E2E 前缀不可覆盖" e2e/ "$E2E_BRANCH_PREFIX"
 

@@ -1,12 +1,12 @@
 ---
-description: ceshi 是控制台，Project-qiaoen 是目标仓
+description: g-lite-harness 是控制台，Project-qiaoen 是目标仓
 alwaysApply: true
 ---
 
 # 两个仓库
 
-控制仓是 `/Users/qiaoen/ceshi`。目标仓是 `/Users/qiaoen/Projects2`（qiaoen12/Project-qiaoen）。
+控制仓是 `/Users/qiaoen/g-lite-harness`。目标仓是 `/Users/qiaoen/Projects2`（qiaoen12/Project-qiaoen）。
 
-从 ceshi 启动。改代码只在 `/Users/qiaoen/ceshi-worktrees` 里的目标仓 worktree。不要把目标仓源码搬进 ceshi。不要用 GitHub API 改 Project-qiaoen 文件。
+从 g-lite-harness 启动。改代码只在 `/Users/qiaoen/ceshi-worktrees` 里的目标仓 worktree。不要把目标仓源码搬进 g-lite-harness。不要用 GitHub API 改 Project-qiaoen 文件。
 
-真实 GitHub 破坏性测试只打 `qiaoen12/ceshi` 的 `e2e/*`。
+真实 GitHub 破坏性测试只打 `qiaoen12/g-lite-harness` 的 `e2e/*`。

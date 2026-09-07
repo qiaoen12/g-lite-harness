@@ -14,7 +14,7 @@ fi
 # 仓库身份不可配置。环境变量和 config.local.sh 都不能改。
 SUT_REPO="qiaoen12/Project-qiaoen"
 SUT_MAIN="main"
-SANDBOX_REPO="qiaoen12/ceshi"
+SANDBOX_REPO="qiaoen12/g-lite-harness"
 SANDBOX_MAIN="e2e/base"
 E2E_BRANCH_PREFIX="e2e/"
 
@@ -59,10 +59,10 @@ ceshi <命令>
   stop                打印人工停止点
   test helpers        解析器自测，不上网
   test local [n]      在目标 worktree 跑夹具
-  test facts          在 qiaoen12/ceshi 上测真实 squash / lease
+  test facts          在 qiaoen12/g-lite-harness 上测真实 squash / lease
   test zmerge [n]     真实 GitHub 上测 zmerge_delete_remote_branch（不是完整 zmerge_run）
   next                开工队列里下一个未关闭 Issue
 
-目标仓只许本地改。破坏性 E2E 只 squash 进 qiaoen12/ceshi 的 e2e/base。
+目标仓只许本地改。破坏性 E2E 只 squash 进 qiaoen12/g-lite-harness 的 e2e/base。
 EOF
 }

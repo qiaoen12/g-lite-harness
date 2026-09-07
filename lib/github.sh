@@ -36,15 +36,15 @@ require_sandbox_repo() {
   [ "$SUT_REPO" = qiaoen12/Project-qiaoen ] \
     || die "目标仓只允许 qiaoen12/Project-qiaoen"
   [ "$SUT_MAIN" = main ] || die "目标仓主分支只允许 main"
-  [ "$SANDBOX_REPO" = qiaoen12/ceshi ] \
-    || die "破坏性 E2E 只允许 qiaoen12/ceshi"
+  [ "$SANDBOX_REPO" = qiaoen12/g-lite-harness ] \
+    || die "破坏性 E2E 只允许 qiaoen12/g-lite-harness"
   [ "$SANDBOX_MAIN" = e2e/base ] \
     || die "破坏性 E2E 只允许 squash 进 e2e/base"
   [ "$E2E_BRANCH_PREFIX" = 'e2e/' ] \
     || die "破坏性 E2E 只允许 e2e/* 分支"
-  got="$(sandbox_name_with_owner)" || die "读不到沙箱仓 qiaoen12/ceshi"
-  [ "$got" = qiaoen12/ceshi ] \
-    || die "沙箱仓实际是 ${got}，必须是 qiaoen12/ceshi"
+  got="$(sandbox_name_with_owner)" || die "读不到沙箱仓 qiaoen12/g-lite-harness"
+  [ "$got" = qiaoen12/g-lite-harness ] \
+    || die "沙箱仓实际是 ${got}，必须是 qiaoen12/g-lite-harness"
 }
 
 require_e2e_confirm() {
