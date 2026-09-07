@@ -1,0 +1,10 @@
+---
+description: Draft PR 和审查之后必须停
+alwaysApply: true
+---
+
+# 停止点
+
+目标仓带 `human-merge` 的任务：Draft PR 和审查之后停。不要 squash merge，不要关 Issue，不要推 main。
+
+等人看完契约、diff、本地夹具和 `ceshi test facts` / `ceshi test zmerge`。只有人明确确认后才人工合并。

@@ -1,0 +1,12 @@
+---
+description: 框架任务用 vanilla git，不用目标仓的 z 系列
+alwaysApply: true
+---
+
+# 框架任务降权
+
+G-lite 冻结前，不要用目标仓的 `new task approve` / claim / `zdev` / `zreview` / `zmerge` / `zsync` / `zpr` 推进框架自己。
+
+用 `bin/ceshi start <n>` 建 worktree，然后普通 `git commit`、`git push`、`gh pr create --draft`。
+
+`zreview` 只可对照。`zmerge` 禁止用于框架任务。不要碰 `/Users/qiaoen/Projects2-worktrees` 里的 Orca 树。

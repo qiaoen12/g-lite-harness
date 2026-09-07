@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# ceshi 入口。控制台在这里，代码改目标仓 worktree。
+set -Eeuo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=/dev/null
+. "$ROOT/lib/common.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/parse.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/github.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/worktree.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/cmd.sh"
+
+cmd="${1:-}"
+shift || true
+case "$cmd" in
+  doctor) cmd_doctor ;;
+  status) cmd_status ;;
+  start) cmd_start "${1:-}" ;;
+  worktree) cmd_worktree "$@" ;;
+  draft) cmd_draft "${1:-}" ;;
+  review) cmd_review "${1:-}" ;;
+  stop) cmd_stop ;;
+  test) cmd_test "$@" ;;
+  next) cmd_next ;;
+  -h|--help|help|"") usage ;;
+  *) die "未知命令：$cmd" ;;
+esac
