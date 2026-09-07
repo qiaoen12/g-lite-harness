@@ -6,7 +6,7 @@
 控制仓：/Users/qiaoen/ceshi
 目标仓：/Users/qiaoen/Projects2          （qiaoen12/Project-qiaoen）
 worktree：/Users/qiaoen/ceshi-worktrees
-沙箱仓：qiaoen12/ceshi
+沙箱仓：qiaoen12/ceshi（E2E squash 进 e2e/base，不写 main）
 ```
 
 ## 每次开工先做

@@ -26,14 +26,14 @@ state="$(GH_PAGER=cat gh pr view "$pr_num" --repo "$SANDBOX_REPO" --json state -
 e2e_expect_eq "squash 后 PR MERGED" MERGED "$state"
 e2e_expect_eq "headRefOid 等于合入前 tip" "$tip" "$head_oid"
 e2e_expect_true "mergeCommit 非空" '[ -n "$merge_oid" ]'
-e2e_expect_true "mergeCommit 是 origin/main 祖先" \
+e2e_expect_true "mergeCommit 是 origin/e2e/base 祖先" \
   'git -C "$E2E_TMP/wt" merge-base --is-ancestor "$merge_oid" "origin/${SANDBOX_MAIN}"'
-e2e_expect_true "tip 不是 origin/main 祖先（GitHub squash 事实）" \
+e2e_expect_true "tip 不是 origin/e2e/base 祖先（GitHub squash 事实）" \
   '! git -C "$E2E_TMP/wt" merge-base --is-ancestor "$tip" "origin/${SANDBOX_MAIN}"'
 e2e_expect_true "远端任务分支仍在" \
   'git -C "$E2E_TMP/wt" ls-remote --exit-code origin "refs/heads/${br}" >/dev/null'
 
 echo
-echo "事实：squash 之后 tip=${tip:0:12} 不在 main 历史上，mergeCommit=${merge_oid:0:12} 在。"
+echo "事实：squash 之后 tip=${tip:0:12} 不在 e2e/base 历史上，mergeCommit=${merge_oid:0:12} 在。"
 echo "只认 merge-base --is-ancestor 的 finalize 会在这里拒绝删分支。"
 e2e_finish

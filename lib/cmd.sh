@@ -22,11 +22,8 @@ cmd_doctor() {
   gh_json repo view "$SUT_REPO" --json nameWithOwner -q .nameWithOwner >/dev/null \
     || die "读不到目标仓 $SUT_REPO"
   require_sandbox_repo
-  if sandbox_has_main_commit; then
-    echo "沙箱 ${SANDBOX_MAIN}：有提交，可跑 test facts / test zmerge"
-  else
-    echo "沙箱 ${SANDBOX_MAIN}：还没有提交。先把 ceshi 自己 push 上去，E2E 才能跑。"
-  fi
+  sandbox_has_e2e_base || die "沙箱 ${SANDBOX_REPO}/${SANDBOX_MAIN} 不存在"
+  echo "沙箱 ${SANDBOX_REPO}/${SANDBOX_MAIN}：存在"
   echo "doctor 通过"
 }
 
@@ -272,7 +269,7 @@ cmd_test_facts() {
   take_yes "$@"
   require_sandbox_repo
   require_e2e_confirm
-  sandbox_has_main_commit || die "沙箱 ${SANDBOX_REPO} 的 ${SANDBOX_MAIN} 还没有提交。先 push ceshi。"
+  sandbox_has_e2e_base || die "沙箱 ${SANDBOX_REPO} 没有 ${SANDBOX_MAIN}"
   bash "$CESHI_ROOT/tests/e2e/run.sh" facts
 }
 
@@ -286,7 +283,7 @@ cmd_test_zmerge() {
   done
   require_sandbox_repo
   require_e2e_confirm
-  sandbox_has_main_commit || die "沙箱 ${SANDBOX_MAIN} 还没有提交。先 push ceshi。"
+  sandbox_has_e2e_base || die "沙箱 ${SANDBOX_REPO} 没有 ${SANDBOX_MAIN}"
   if [ -z "$n" ]; then
     n="$(g_lite_open_queue | awk 'NR==1{print; exit}')"
     n="${n:-40}"

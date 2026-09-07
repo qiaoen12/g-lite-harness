@@ -8,6 +8,8 @@ ok() { pass=$((pass+1)); }
 bad() { echo "✗ $*" >&2; fail=$((fail+1)); }
 eq() { if [ "$2" = "$3" ]; then ok; else bad "$1: 期望 [$2] 实际 [$3]"; fi; }
 
+SUT_REPO=evil/other
+SUT_MAIN=develop
 SANDBOX_REPO=evil/other
 SANDBOX_MAIN=develop
 E2E_BRANCH_PREFIX=tmp/
@@ -16,8 +18,10 @@ E2E_BRANCH_PREFIX=tmp/
 # shellcheck source=/dev/null
 . "$ROOT/lib/parse.sh"
 
+eq "SUT_REPO 不可覆盖" qiaoen12/Project-qiaoen "$SUT_REPO"
+eq "SUT_MAIN 不可覆盖" main "$SUT_MAIN"
 eq "SANDBOX_REPO 不可覆盖" qiaoen12/ceshi "$SANDBOX_REPO"
-eq "SANDBOX_MAIN 不可覆盖" main "$SANDBOX_MAIN"
+eq "SANDBOX_MAIN 不可覆盖" e2e/base "$SANDBOX_MAIN"
 eq "E2E 前缀不可覆盖" e2e/ "$E2E_BRANCH_PREFIX"
 
 open_hm='{"state":"OPEN","labels":[{"name":"meta"},{"name":"human-merge"}]}'

@@ -24,22 +24,34 @@ sandbox_default_branch() {
     -q .defaultBranchRef.name
 }
 
-sandbox_has_main_commit() {
+sandbox_has_e2e_base() {
   local sha
-  sha="$(gh_json api "repos/${SANDBOX_REPO}/commits/${SANDBOX_MAIN}" --jq .sha 2>/dev/null)" || return 1
+  sha="$(gh_json api "repos/${SANDBOX_REPO}/git/ref/heads/${SANDBOX_MAIN}" \
+    --jq .object.sha 2>/dev/null)" || return 1
   [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
 }
 
 require_sandbox_repo() {
   local got
+  [ "$SUT_REPO" = qiaoen12/Project-qiaoen ] \
+    || die "目标仓只允许 qiaoen12/Project-qiaoen"
+  [ "$SUT_MAIN" = main ] || die "目标仓主分支只允许 main"
   [ "$SANDBOX_REPO" = qiaoen12/ceshi ] \
     || die "破坏性 E2E 只允许 qiaoen12/ceshi"
+  [ "$SANDBOX_MAIN" = e2e/base ] \
+    || die "破坏性 E2E 只允许 squash 进 e2e/base"
   [ "$E2E_BRANCH_PREFIX" = 'e2e/' ] \
     || die "破坏性 E2E 只允许 e2e/* 分支"
   got="$(sandbox_name_with_owner)" || die "读不到沙箱仓 qiaoen12/ceshi"
   [ "$got" = qiaoen12/ceshi ] \
     || die "沙箱仓实际是 ${got}，必须是 qiaoen12/ceshi"
-  [ "$got" != "$SUT_REPO" ] || die "拒绝：沙箱仓不能等于目标仓 ${SUT_REPO}"
+}
+
+require_e2e_confirm() {
+  if [ "${CESHI_YES:-}" = 1 ]; then
+    return 0
+  fi
+  die "真实 GitHub 测试会改 ${SANDBOX_REPO} 的 e2e/*（squash 进 e2e/base）。加上 --yes 或 CESHI_YES=1"
 }
 
 require_open_human_merge() {
@@ -70,13 +82,6 @@ require_matching_draft_pr() {
   printf '%s' "$js" | jq -c '.[0]'
 }
 
-require_e2e_confirm() {
-  if [ "${CESHI_YES:-}" = 1 ]; then
-    return 0
-  fi
-  die "真实 GitHub 测试会改 ${SANDBOX_REPO} 的 ${E2E_BRANCH_PREFIX}* 分支。加上 --yes 或 CESHI_YES=1"
-}
-
 e2e_name() {
   local kind="$1"
   printf '%s%s-%s-%s\n' "$E2E_BRANCH_PREFIX" "$kind" "$(date -u +%Y%m%d%H%M%S)" "$$"
@@ -88,5 +93,6 @@ require_e2e_branch() {
     "${E2E_BRANCH_PREFIX}"*) ;;
     *) die "拒绝操作非 ${E2E_BRANCH_PREFIX} 分支：$br" ;;
   esac
+  [ "$br" != "$SANDBOX_MAIN" ] || die "拒绝操作持久 base：${SANDBOX_MAIN}"
   branch_ok "$br" || die "非法分支名：$br"
 }

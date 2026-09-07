@@ -11,9 +11,11 @@ if [ -f "$CESHI_ROOT/config.local.sh" ]; then
   . "$CESHI_ROOT/config.local.sh"
 fi
 
-# 破坏性 GitHub 目标不可配置。环境变量和 config.local.sh 都不能改。
+# 仓库身份不可配置。环境变量和 config.local.sh 都不能改。
+SUT_REPO="qiaoen12/Project-qiaoen"
+SUT_MAIN="main"
 SANDBOX_REPO="qiaoen12/ceshi"
-SANDBOX_MAIN="main"
+SANDBOX_MAIN="e2e/base"
 E2E_BRANCH_PREFIX="e2e/"
 
 c_ok()   { printf '%s\n' "$*"; }
@@ -61,6 +63,6 @@ ceshi <命令>
   test zmerge [n]     真实 GitHub 上测 zmerge_delete_remote_branch（不是完整 zmerge_run）
   next                开工队列里下一个未关闭 Issue
 
-目标仓只许本地改。沙箱仓只许打 e2e/* 分支。
+目标仓只许本地改。破坏性 E2E 只 squash 进 qiaoen12/ceshi 的 e2e/base。
 EOF
 }
