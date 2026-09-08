@@ -16,25 +16,27 @@ g-lite-harness                控制脚本、提示词、E2E
         └─ 目标仓 Draft PR → 审查 → 【停】→ 人 squash merge
 ```
 
-#38 合进去之后 finalize 卡在删分支，就是因为夹具用本地 bare 仓模拟「tip 已在 main 上」，没碰到 GitHub squash 之后 tip 不在 main 历史上这件事。#40 要先在 g-lite-harness 上看到真实语义，再给目标仓开 Draft PR。
+#40 / #33 已合入。#41 拆成 41a/41b/41c 三个串行 PR，Issue 保持开放直到 41c。
 
 ## 命令
 
 ```bash
 bin/ceshi doctor
 bin/ceshi status
-bin/ceshi start 40
-bin/ceshi test local 40
+bin/ceshi start 41
+bin/ceshi test local 41
 bin/ceshi test facts --yes
-bin/ceshi test zmerge 40 --yes
-bin/ceshi draft 40
-bin/ceshi review 40
+bin/ceshi draft 41 --refs      # 41a / 41b：合入不关 Issue
+bin/ceshi draft 41 --fixes     # 41c：final，合入后关 Issue
+bin/ceshi review 41
 bin/ceshi stop
 ```
 
-`test facts` / `test zmerge` 在 `qiaoen12/g-lite-harness` 上开临时 `e2e/*` 分支，squash 进 `e2e/base`，不写 `g-lite-harness/main`，也不碰 Project-qiaoen。`SUT_REPO` / `SANDBOX_REPO` / 对应主分支都写死，环境变量改不了。
+`test facts` / `test zmerge` 在 `qiaoen12/g-lite-harness` 上开临时 `e2e/*` 分支，squash 进 `e2e/base`，不写 `g-lite-harness/main`，也不碰 Project-qiaoen。`test facts` 另开 Refs/Fixes PR，用 GraphQL 关闭引用证明中间 PR 不关 Issue。`SUT_REPO` / `SANDBOX_REPO` / 对应主分支都写死，环境变量改不了。
 
 `start` / `draft` / `review` 要求 Issue 仍是 OPEN 且带 GitHub 标签 `human-merge`。`review` 还要求恰好一个 Draft PR，且 `headRefOid` 等于 worktree HEAD。
+
+`ceshi draft <n>` 默认 `--fixes`。#41a/b 必须 `--refs`。
 
 G-lite 队列默认 `40 33 41 30 42 29 28 31`。改代码前在稳定目标仓 main 上 `0-meta/bin/new task approve <n>`；候选 worktree 不得跑 `new`/`z`。
 

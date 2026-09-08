@@ -54,7 +54,9 @@ ceshi <命令>
   worktree list
   worktree add <n>    等同 start
   worktree remove <n> 只删本机 ceshi worktree，不删远端
-  draft <n>           从 worktree push 并开 Draft PR
+  draft <n> [--refs|--fixes]
+                      从 worktree push 并开 Draft PR。
+                      --refs 只关联不关 Issue（#41a/b）；默认 --fixes 合入后关 Issue（#41c 与单 PR 任务）
   review <n>          打印审查卡（不是 zreview，不放行合并）
   stop                打印人工停止点
   test helpers        解析器自测，不上网

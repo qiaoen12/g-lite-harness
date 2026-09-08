@@ -127,7 +127,7 @@ EOF
   echo
   echo "下一步：cd ${dest}"
   echo "改代码后：ceshi test local ${n} && ceshi test facts --yes && ceshi test zmerge ${n} --yes"
-  echo "然后：ceshi draft ${n} && ceshi review ${n} && ceshi stop"
+  echo "然后：ceshi draft ${n} [--refs|--fixes] && ceshi review ${n} && ceshi stop"
 }
 
 cmd_worktree() {
@@ -150,8 +150,15 @@ cmd_worktree() {
 }
 
 cmd_draft() {
-  local n="${1:-}" wt branch title url json
-  issue_number_ok "${n:-}" || die "用法：ceshi draft <Issue号>"
+  local n="" kind=fixes a wt branch title url json trailer
+  for a in "$@"; do
+    case "$a" in
+      --refs) kind=refs ;;
+      --fixes) kind=fixes ;;
+      *) n="$a" ;;
+    esac
+  done
+  issue_number_ok "${n:-}" || die "用法：ceshi draft <Issue号> [--refs|--fixes]"
   json="$(sut_issue_json "$n")" || die "读不到 ${SUT_REPO}#${n}"
   require_open_human_merge "$json" "$n"
   wt="$(worktree_find "$n")" || die "先 ceshi start ${n}"
@@ -163,6 +170,7 @@ cmd_draft() {
     die "HEAD 已在 origin/${SUT_MAIN} 上，没有可交付提交"
   fi
   title="$(printf '%s' "$json" | jq -r .title)"
+  trailer="$(draft_issue_ref "$n" "$kind")" || die "draft 关联必须是 --refs 或 --fixes"
   git -C "$wt" push -u origin "HEAD:refs/heads/${branch}"
   url="$(gh_json pr create --repo "$SUT_REPO" --draft \
     --base "$SUT_MAIN" \
@@ -177,15 +185,21 @@ cmd_draft() {
 | worktree | \`${wt}\` |
 | HEAD | \`$(git -C "$wt" rev-parse HEAD)\` |
 | 控制仓 | ceshi |
+| 关联 | ${kind} |
 
 本 PR 由 ceshi 用 vanilla git + gh 创建。
 未走 \`new task\` / claim / zdev / zreview / zmerge。
 审查之后必须停，等人确认再 squash merge。
 
-Fixes #${n}
+${trailer}
 EOF
 )")"
   echo "Draft PR：$url"
+  if [ "$kind" = refs ]; then
+    echo "关联：Refs #${n}（中间 PR，合入不关 Issue）"
+  else
+    echo "关联：Fixes #${n}（final PR，合入默认分支后关 Issue）"
+  fi
   echo "下一步：ceshi review ${n} && ceshi stop"
 }
 
@@ -278,7 +292,7 @@ cmd_test_local() {
   if [ -f "$wt/0-meta/lib/new/claim-resume.test.sh" ]; then
     (cd "$wt" && bash 0-meta/lib/new/claim-resume.test.sh)
   fi
-  # #40 不跑 contract.test.sh：main 上仍有 4 条陈旧静态断言，留给 #33 R1。
+  # #33 已把 contract.test.sh 拉回可用；#41 继续跑它。
   case "${n:-}" in
     33|41)
       if [ -f "$wt/0-meta/lib/new/contract.test.sh" ]; then

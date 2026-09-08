@@ -6,6 +6,7 @@ case "$kind" in
   facts)
     bash "$HERE/facts-squash.sh"
     bash "$HERE/facts-lease.sh"
+    bash "$HERE/refs-fixes.sh"
     ;;
   zmerge)
     bash "$HERE/zmerge-delete.sh"

@@ -67,3 +67,15 @@ worktree_name() {
 issue_number_ok() {
   [[ "$1" =~ ^[1-9][0-9]*$ ]]
 }
+
+# GitHub 只把 Fixes/Closes/Resolves 当关闭关键字；Refs 只关联。
+# 中间 PR 必须 Refs，final PR 才 Fixes。合入默认分支后才会真正关 Issue。
+draft_issue_ref() {
+  local n="$1" kind="${2:-fixes}"
+  issue_number_ok "$n" || return 1
+  case "$kind" in
+    refs) printf 'Refs #%s\n' "$n" ;;
+    fixes) printf 'Fixes #%s\n' "$n" ;;
+    *) return 2 ;;
+  esac
+}

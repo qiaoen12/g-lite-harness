@@ -39,5 +39,20 @@ labels=$'meta\nhuman-merge'
 if issue_has_human_merge "$labels"; then ok; else bad "human-merge 未识别"; fi
 if issue_has_human_merge $'meta'; then bad "无标签误报"; else ok; fi
 
+eq "Fixes trailer" "Fixes #41" "$(draft_issue_ref 41 fixes)"
+eq "Refs trailer" "Refs #41" "$(draft_issue_ref 41 refs)"
+eq "默认 Fixes" "Fixes #33" "$(draft_issue_ref 33)"
+rc=0
+draft_issue_ref 0 fixes >/dev/null 2>&1 || rc=$?
+eq "非法 Issue 号" 1 "$rc"
+rc=0
+draft_issue_ref 41 close >/dev/null 2>&1 || rc=$?
+eq "非法 closer" 2 "$rc"
+if printf '%s' "$(draft_issue_ref 41 refs)" | grep -qE 'Fixes|Closes|Resolves'; then
+  bad "Refs 不得含关闭关键字"
+else
+  ok
+fi
+
 echo "helpers ${pass} pass, ${fail} fail"
 [ "$fail" = 0 ]

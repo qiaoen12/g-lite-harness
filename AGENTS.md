@@ -14,8 +14,8 @@ worktree：/Users/qiaoen/ceshi-worktrees
 ```bash
 bin/ceshi doctor
 bin/ceshi status
-bin/ceshi start 40          # 或不写号，取队列下一个 OPEN+human-merge
-# 队列：40 33 41 30 42 29 28 31
+bin/ceshi start 41          # 或不写号，取队列下一个 OPEN+human-merge
+# 队列：40 33 41 30 42 29 28 31（#40 #33 已合）
 ```
 
 然后 `cd` 到打印出来的 worktree，用普通 git 改目标仓。
@@ -32,7 +32,7 @@ bin/ceshi start 40          # 或不写号，取队列下一个 OPEN+human-merge
 
 ```text
 git worktree / commit / push
-gh pr create --draft
+gh pr create --draft          # 41a/b：ceshi draft n --refs；41c / 单 PR：--fixes
 bin/ceshi test local|facts|zmerge
 AI 审查（本控制台的 review，不是 zreview）
 稳定 main 主工作区：0-meta/bin/new task approve <n>

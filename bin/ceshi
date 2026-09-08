@@ -21,7 +21,7 @@ case "$cmd" in
   status) cmd_status ;;
   start) cmd_start "${1:-}" ;;
   worktree) cmd_worktree "$@" ;;
-  draft) cmd_draft "${1:-}" ;;
+  draft) cmd_draft "$@" ;;
   review) cmd_review "${1:-}" ;;
   stop) cmd_stop ;;
   test) cmd_test "$@" ;;
