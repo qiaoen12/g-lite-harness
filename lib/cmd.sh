@@ -68,7 +68,7 @@ cmd_status() {
 }
 
 cmd_start() {
-  local n="${1:-}" json body branch sparse labels dest
+  local n="${1:-}" json body branch sparse labels dest body_sha
   if [ -z "$n" ]; then
     n="$(g_lite_open_queue | awk 'NR==1{print; exit}')"
     [ -n "$n" ] || die "G-lite 队列没有未关闭 Issue"
@@ -87,7 +87,6 @@ cmd_start() {
   labels="$(sut_issue_labels "$json")"
   worktree_add "$n" "$branch"
   dest="$(worktree_find "$n")"
-  mkdir -p "$CESHI_ROOT/records/tasks"
   export CESHI_TPL_ISSUE="$n"
   export CESHI_TPL_SUT_REPO="$SUT_REPO"
   export CESHI_TPL_SUT_ROOT="$SUT_ROOT"
@@ -96,6 +95,9 @@ cmd_start() {
   export CESHI_TPL_BRANCH="$branch"
   export CESHI_TPL_TITLE
   CESHI_TPL_TITLE="$(printf '%s' "$json" | jq -r .title)"
+  body_sha="$(printf '%s' "$body" | shasum -a 256 | awk '{print $1}')"
+  mkdir -p "$CESHI_ROOT/records/tasks"
+  printf '%s\n' "$body" > "$CESHI_ROOT/records/tasks/${n}.body.md"
   cat > "$CESHI_ROOT/records/tasks/${n}.md" <<EOF
 # ${SUT_REPO}#${n}
 
@@ -105,9 +107,14 @@ cmd_start() {
 - worktree：${dest}
 - sparse 建议：${sparse:-（无，本控制台用完整 worktree）}
 - human-merge：$(issue_has_human_merge "$labels" && echo 是 || echo 否)
+- body-sha256：${body_sha}
 - 地址：$(printf '%s' "$json" | jq -r .url)
 
-不要在这个任务上跑 new / claim / zdev / zreview / zmerge。
+契约 SSOT 是稳定 main 上 \`new task approve ${n}\` 写入的 origin/main blob。
+本文件的 sha256 只供 draft/review 对照 Issue 漂移。
+
+不要在候选 worktree 跑 new / claim / zdev / zreview / zmerge。
+批准契约只允许在稳定 main 主工作区：cd ${SUT_ROOT} && 0-meta/bin/new task approve ${n}
 EOF
   echo
   echo "====== 开工卡 ======"
@@ -183,7 +190,7 @@ EOF
 }
 
 cmd_review() {
-  local n="${1:-}" wt head title json branch pr pr_num pr_url
+  local n="${1:-}" wt head title json branch pr pr_num pr_url now_body now_sha snap_sha
   issue_number_ok "${n:-}" || die "用法：ceshi review <Issue号>"
   json="$(sut_issue_json "$n")" || die "读不到 ${SUT_REPO}#${n}"
   require_open_human_merge "$json" "$n"
@@ -214,6 +221,16 @@ cmd_review() {
     fi
   fi
   echo
+  if [ -f "$CESHI_ROOT/records/tasks/${n}.body.md" ]; then
+    now_body="$(printf '%s' "$json" | jq -r .body)"
+    now_sha="$(printf '%s' "$now_body" | shasum -a 256 | awk '{print $1}')"
+    snap_sha="$(awk -F'：' '/body-sha256/{print $2; exit}' "$CESHI_ROOT/records/tasks/${n}.md")"
+    echo "Issue 正文 sha256：开工 ${snap_sha:-（无快照）} / 现在 ${now_sha}"
+    if [ -n "$snap_sha" ] && [ "$snap_sha" != "$now_sha" ]; then
+      echo "⚠ Issue 正文相对开工快照已变。以 origin/main 契约为准；若要采用新正文，先在稳定主工作区 new task approve ${n}。"
+    fi
+  fi
+  echo
   echo "这不是放行。下一步：ceshi stop"
 }
 
@@ -236,6 +253,13 @@ cmd_test() {
   esac
 }
 
+run_new_check_commit() {
+  local wt="$1"
+  if [ -x "$wt/0-meta/bin/new" ]; then
+    (cd "$wt" && 0-meta/bin/new check --tier commit)
+  fi
+}
+
 cmd_test_local() {
   local n="${1:-}" wt
   if [ -n "$n" ]; then
@@ -244,7 +268,7 @@ cmd_test_local() {
   else
     wt="$SUT_ROOT"
   fi
-  echo "在 ${wt} 跑夹具"
+  echo "在 ${wt} 跑夹具（issue=${n:-main}）"
   if [ -f "$wt/.agents/skills/zmerge/scripts/check-mutex-finalize.sh" ]; then
     (cd "$wt" && bash .agents/skills/zmerge/scripts/check-mutex-finalize.sh)
   fi
@@ -254,6 +278,24 @@ cmd_test_local() {
   if [ -f "$wt/0-meta/lib/new/claim-resume.test.sh" ]; then
     (cd "$wt" && bash 0-meta/lib/new/claim-resume.test.sh)
   fi
+  # #40 不跑 contract.test.sh：main 上仍有 4 条陈旧静态断言，留给 #33 R1。
+  case "${n:-}" in
+    33|41)
+      if [ -f "$wt/0-meta/lib/new/contract.test.sh" ]; then
+        (cd "$wt" && bash 0-meta/lib/new/contract.test.sh)
+      fi
+      run_new_check_commit "$wt"
+      ;;
+    42)
+      if [ -f "$wt/0-meta/lib/new/metrics.test.sh" ]; then
+        (cd "$wt" && bash 0-meta/lib/new/metrics.test.sh)
+      fi
+      run_new_check_commit "$wt"
+      ;;
+    28|29|30|31)
+      run_new_check_commit "$wt"
+      ;;
+  esac
 }
 
 take_yes() {

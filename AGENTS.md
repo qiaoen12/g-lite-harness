@@ -14,14 +14,15 @@ worktree：/Users/qiaoen/ceshi-worktrees
 ```bash
 bin/ceshi doctor
 bin/ceshi status
-bin/ceshi start 40          # 或不写号，取 G-lite 下一个 OPEN+human-merge
+bin/ceshi start 40          # 或不写号，取队列下一个 OPEN+human-merge
+# 队列：40 33 41 30 42 29 28 31
 ```
 
 然后 `cd` 到打印出来的 worktree，用普通 git 改目标仓。
 
 ## 禁止
 
-- 不要用目标仓正在开发的 `new task approve` / claim / `zdev` / `zreview` / `zmerge` / `zsync` / `zpr` 管理框架自己。
+- 不要用目标仓**候选** runtime 的 `new task approve` / claim / `zdev` / `zreview` / `zmerge` / `zsync` / `zpr` 管理框架自己。稳定 `/Users/qiaoen/Projects2` main 上的 `new task approve <n>` 是 #25 允许的契约进 main 路径。
 - 不要通过 GitHub API 一行一行改 Project-qiaoen。
 - 不要在 `/Users/qiaoen/Projects2-worktrees` 里的 Orca 树上做 G-lite。
 - 不要把目标仓代码搬进 g-lite-harness。
@@ -34,6 +35,7 @@ git worktree / commit / push
 gh pr create --draft
 bin/ceshi test local|facts|zmerge
 AI 审查（本控制台的 review，不是 zreview）
+稳定 main 主工作区：0-meta/bin/new task approve <n>
 停
 人确认后，人工 squash merge
 ```

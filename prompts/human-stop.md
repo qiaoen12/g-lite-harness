@@ -20,7 +20,7 @@
 
 人要再看一遍：
 
-1. Issue 契约是不是真实语义，不是夹具语义
+1. origin/main 上的 `0-meta/tasks/<n>/` 契约是不是真实语义，不是夹具语义；Issue 正文相对开工 sha256 是否漂移
 2. Review / 本控制台审查意见
 3. `ceshi test facts` 和 `ceshi test zmerge` 输出
 4. 实际 diff

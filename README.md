@@ -34,7 +34,9 @@ bin/ceshi stop
 
 `test facts` / `test zmerge` 在 `qiaoen12/g-lite-harness` 上开临时 `e2e/*` 分支，squash 进 `e2e/base`，不写 `g-lite-harness/main`，也不碰 Project-qiaoen。`SUT_REPO` / `SANDBOX_REPO` / 对应主分支都写死，环境变量改不了。
 
-`start` / `draft` / `review` 要求 Issue 仍是 OPEN 且带 `human-merge`。`review` 还要求恰好一个 Draft PR，且 `headRefOid` 等于 worktree HEAD。
+`start` / `draft` / `review` 要求 Issue 仍是 OPEN 且带 GitHub 标签 `human-merge`。`review` 还要求恰好一个 Draft PR，且 `headRefOid` 等于 worktree HEAD。
+
+G-lite 队列默认 `40 33 41 30 42 29 28 31`。改代码前在稳定目标仓 main 上 `0-meta/bin/new task approve <n>`；候选 worktree 不得跑 `new`/`z`。
 
 ## 本机覆盖
 

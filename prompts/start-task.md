@@ -23,7 +23,14 @@ ceshi review {{ISSUE}}
 ceshi stop
 ```
 
-不要用：
+允许且必须（稳定 main 主工作区，不是本 worktree）：
+
+```text
+cd {{SUT_ROOT}}
+0-meta/bin/new task approve {{ISSUE}}
+```
+
+不要在本 worktree / 候选 HEAD 上用：
 
 ```text
 new task approve

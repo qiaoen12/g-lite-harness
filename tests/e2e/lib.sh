@@ -100,7 +100,7 @@ e2e_push_branch() {
 }
 
 e2e_pr_squash_keep_branch() {
-  local br="$1" title="$2" url num tip json oid
+  local br="$1" title="$2" url num tip json oid i
   url="$(GH_PAGER=cat gh pr create --repo "$SANDBOX_REPO" \
     --base "$SANDBOX_MAIN" --head "$br" \
     --title "$title" \
@@ -108,9 +108,17 @@ e2e_pr_squash_keep_branch() {
   num="${url##*/}"
   tip="$(git -C "$E2E_TMP/wt" rev-parse HEAD)"
   GH_PAGER=cat gh pr merge "$num" --repo "$SANDBOX_REPO" --squash >/dev/null
-  json="$(GH_PAGER=cat gh pr view "$num" --repo "$SANDBOX_REPO" \
-    --json number,state,headRefOid,mergeCommit)"
-  oid="$(printf '%s' "$json" | jq -r '.mergeCommit.oid // empty')"
+  oid=""
+  for i in 1 2 3 4 5 6 7 8; do
+    json="$(GH_PAGER=cat gh pr view "$num" --repo "$SANDBOX_REPO" \
+      --json number,state,headRefOid,mergeCommit)"
+    oid="$(printf '%s' "$json" | jq -r '.mergeCommit.oid // empty')"
+    if [ -n "$oid" ]; then
+      break
+    fi
+    sleep 1
+  done
+  [ -n "$oid" ] || die "e2e: ${SANDBOX_REPO}#${num} squash 后 mergeCommit 仍未观察（GitHub 最终一致）。fail-closed，不把空 oid 交给夹具。"
   git -C "$E2E_TMP/wt" fetch -q origin \
     "refs/heads/${SANDBOX_MAIN}:refs/remotes/origin/${SANDBOX_MAIN}"
   printf '%s %s %s\n' "$num" "$tip" "$oid"
