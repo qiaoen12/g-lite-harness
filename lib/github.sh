@@ -33,8 +33,8 @@ sandbox_has_e2e_base() {
 
 require_sandbox_repo() {
   local got
-  [ "$SUT_REPO" = qiaoen12/Project-qiaoen ] \
-    || die "目标仓只允许 qiaoen12/Project-qiaoen"
+  [ "$SUT_REPO" = qiaoen12/g-lite ] \
+    || die "目标仓只允许 qiaoen12/g-lite"
   [ "$SUT_MAIN" = main ] || die "目标仓主分支只允许 main"
   [ "$SANDBOX_REPO" = qiaoen12/g-lite-harness ] \
     || die "破坏性 E2E 只允许 qiaoen12/g-lite-harness"

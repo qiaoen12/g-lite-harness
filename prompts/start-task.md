@@ -23,7 +23,9 @@ ceshi review {{ISSUE}}
 ceshi stop
 ```
 
-允许且必须（稳定 main 主工作区，不是本 worktree）：
+g-lite#1 bootstrap：稳定 main 还没有 canonical runtime，不要跑 `new task approve`。用 vanilla git / gh。
+
+之后若 main 已有 runtime，才允许在稳定 main 主工作区（不是本 worktree）：
 
 ```text
 cd {{SUT_ROOT}}

@@ -1,5 +1,7 @@
 # G-lite 在外部控制台里的排期
 
+当前目标仓是 `qiaoen12/g-lite`，队列 `1`（v1.0 提取）。下面是 Project-qiaoen prototype 阶段的历史排期，已全部合入或关闭。
+
 来源：https://github.com/qiaoen12/Project-qiaoen/issues/25
 
 已合入：#26 #27 #20 #21 #38 #40 #33。

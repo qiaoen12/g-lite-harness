@@ -12,7 +12,7 @@ if [ -f "$CESHI_ROOT/config.local.sh" ]; then
 fi
 
 # 仓库身份不可配置。环境变量和 config.local.sh 都不能改。
-SUT_REPO="qiaoen12/Project-qiaoen"
+SUT_REPO="qiaoen12/g-lite"
 SUT_MAIN="main"
 SANDBOX_REPO="qiaoen12/g-lite-harness"
 SANDBOX_MAIN="e2e/base"
@@ -50,7 +50,7 @@ ceshi <命令>
 
   doctor              检查路径、gh、目标仓、沙箱仓
   status              G-lite 队列、ceshi worktree、禁止使用的 Orca 树
-  start [Issue号]     读 Project-qiaoen Issue，建 vanilla worktree
+  start [Issue号]     读 qiaoen12/g-lite Issue，建 vanilla worktree
   worktree list
   worktree add <n>    等同 start
   worktree remove <n> 只删本机 ceshi worktree，不删远端

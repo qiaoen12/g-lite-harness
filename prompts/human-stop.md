@@ -13,7 +13,7 @@
 还不能做：
 
 - `zmerge`
-- `gh pr merge` 打 Project-qiaoen
+- `gh pr merge` 打 qiaoen12/g-lite
 - 关 Issue
 - 推目标仓 `main`
 - 删 `refs/claims/<n>`

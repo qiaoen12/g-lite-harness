@@ -15,8 +15,11 @@ cmd_doctor() {
   local origin
   origin="$(sut_git remote get-url origin)"
   case "$origin" in
-    *Project-qiaoen*) ;;
-    *) die "目标仓 origin 不是 Project-qiaoen：$origin" ;;
+    *g-lite-harness*)
+      die "目标仓 origin 是 g-lite-harness，不是 g-lite：$origin" ;;
+    *qiaoen12/g-lite.git|*qiaoen12/g-lite)
+      ;;
+    *) die "目标仓 origin 不是 qiaoen12/g-lite：$origin" ;;
   esac
   gh auth status >/dev/null || die "gh 未登录"
   gh_json repo view "$SUT_REPO" --json nameWithOwner -q .nameWithOwner >/dev/null \
@@ -110,11 +113,11 @@ cmd_start() {
 - body-sha256：${body_sha}
 - 地址：$(printf '%s' "$json" | jq -r .url)
 
-契约 SSOT 是稳定 main 上 \`new task approve ${n}\` 写入的 origin/main blob。
+g-lite#1 bootstrap 没有 origin/main 契约 blob；Issue 正文是提取范围的事实源。
 本文件的 sha256 只供 draft/review 对照 Issue 漂移。
 
 不要在候选 worktree 跑 new / claim / zdev / zreview / zmerge。
-批准契约只允许在稳定 main 主工作区：cd ${SUT_ROOT} && 0-meta/bin/new task approve ${n}
+main 还没有 runtime 时不要跑 new task approve。
 EOF
   echo
   echo "====== 开工卡 ======"
@@ -294,6 +297,17 @@ cmd_test_local() {
   fi
   # #33 已把 contract.test.sh 拉回可用；#41 继续跑它。
   case "${n:-}" in
+    1)
+      for t in contract review metrics guard portable-runtime setup agent-card; do
+        if [ -f "$wt/0-meta/lib/new/${t}.test.sh" ]; then
+          (cd "$wt" && bash "0-meta/lib/new/${t}.test.sh")
+        fi
+      done
+      if [ -f "$wt/2-infra/git-guard/main_guard_test.py" ]; then
+        (cd "$wt" && python3 2-infra/git-guard/main_guard_test.py)
+      fi
+      run_new_check_commit "$wt"
+      ;;
     33|41)
       if [ -f "$wt/0-meta/lib/new/contract.test.sh" ]; then
         (cd "$wt" && bash 0-meta/lib/new/contract.test.sh)
