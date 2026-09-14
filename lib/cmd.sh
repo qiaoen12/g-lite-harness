@@ -320,6 +320,12 @@ cmd_test_local() {
       fi
       run_new_check_commit "$wt"
       ;;
+    13)
+      if [ -f "$wt/0-meta/lib/new/completion.test.sh" ]; then
+        (cd "$wt" && bash 0-meta/lib/new/completion.test.sh)
+      fi
+      run_new_check_commit "$wt"
+      ;;
     28|29|30|31)
       run_new_check_commit "$wt"
       ;;
