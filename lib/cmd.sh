@@ -326,6 +326,18 @@ cmd_test_local() {
       fi
       run_new_check_commit "$wt"
       ;;
+    14)
+      if [ -f "$wt/0-meta/lib/new/guard.test.sh" ]; then
+        (cd "$wt" && bash 0-meta/lib/new/guard.test.sh)
+      fi
+      if [ -f "$wt/0-meta/lib/new/guard-issue14.test.sh" ]; then
+        (cd "$wt" && bash 0-meta/lib/new/guard-issue14.test.sh)
+      fi
+      if [ -f "$wt/.agents/skills/zmerge/scripts/check-guard-recovery.sh" ]; then
+        (cd "$wt" && bash .agents/skills/zmerge/scripts/check-guard-recovery.sh)
+      fi
+      run_new_check_commit "$wt"
+      ;;
     28|29|30|31)
       run_new_check_commit "$wt"
       ;;
