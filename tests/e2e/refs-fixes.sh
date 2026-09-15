@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
-# 中间 PR 用 Refs，不进入 closingIssuesReferences；final 用 Fixes，会进入。
-# GitHub 只对打向默认分支的 PR 填关闭引用，合入默认分支后才真正关 Issue。
-# 本测试对默认分支开 Draft、不合入 main，读 GraphQL，并确认 Issue 仍 OPEN。
+# Refs 不进入 closingIssuesReferences；Fixes 会进入。Draft 打默认分支，不合入 main。
+# 直接运行：bash tests/e2e/refs-fixes.sh --yes
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=/dev/null
-. "$ROOT/lib/common.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/parse.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/github.sh"
-# shellcheck source=/dev/null
-. "$ROOT/tests/e2e/lib.sh"
+. "$HERE/lib.sh"
 
 E2E_ISSUE=""
 E2E_PR_REFS=""
 E2E_PR_FIXES=""
+
+e2e_issue_ref() {
+  local n="$1" kind="$2"
+  [[ "$n" =~ ^[1-9][0-9]*$ ]] || die "非法 Issue 号：${n}"
+  case "$kind" in
+    refs) printf 'Refs #%s\n' "$n" ;;
+    fixes) printf 'Fixes #%s\n' "$n" ;;
+    *) die "关联必须是 refs 或 fixes" ;;
+  esac
+}
 
 e2e_closing_numbers() {
   local pr="$1" owner name
@@ -36,29 +39,42 @@ e2e_closing_numbers() {
 }
 
 e2e_refs_cleanup() {
-  [ -n "${E2E_PR_REFS:-}" ] && \
-    GH_PAGER=cat gh pr close "$E2E_PR_REFS" --repo "$SANDBOX_REPO" >/dev/null 2>&1 || true
-  [ -n "${E2E_PR_FIXES:-}" ] && \
-    GH_PAGER=cat gh pr close "$E2E_PR_FIXES" --repo "$SANDBOX_REPO" >/dev/null 2>&1 || true
-  [ -n "${E2E_ISSUE:-}" ] && \
+  local test_rc=$?
+  if [ -n "${E2E_PR_REFS:-}" ]; then
+    GH_PAGER=cat gh pr close "$E2E_PR_REFS" --repo "$SANDBOX_REPO" >/dev/null \
+      || printf 'LEFTOVER pr=%s\nRECOVERY: gh pr close %s --repo %s\n' \
+        "$E2E_PR_REFS" "$E2E_PR_REFS" "$SANDBOX_REPO" >&2
+  fi
+  if [ -n "${E2E_PR_FIXES:-}" ]; then
+    GH_PAGER=cat gh pr close "$E2E_PR_FIXES" --repo "$SANDBOX_REPO" >/dev/null \
+      || printf 'LEFTOVER pr=%s\nRECOVERY: gh pr close %s --repo %s\n' \
+        "$E2E_PR_FIXES" "$E2E_PR_FIXES" "$SANDBOX_REPO" >&2
+  fi
+  if [ -n "${E2E_ISSUE:-}" ]; then
     GH_PAGER=cat gh issue close "$E2E_ISSUE" --repo "$SANDBOX_REPO" \
-      --comment "ceshi e2e cleanup" >/dev/null 2>&1 || true
-  e2e_cleanup
+      --comment "harness e2e cleanup" >/dev/null \
+      || printf 'LEFTOVER issue=%s\nRECOVERY: gh issue close %s --repo %s\n' \
+        "$E2E_ISSUE" "$E2E_ISSUE" "$SANDBOX_REPO" >&2
+  fi
+  e2e_cleanup || printf 'branch cleanup 有残留，见上方 LEFTOVER\n' >&2
+  exit "$test_rc"
 }
 
 e2e_push_from_default() {
   local wt="$1" br="$2" file="$3" default="$4"
   require_e2e_branch "$br"
+  e2e_refuse_existing "$wt" "$br"
   git -C "$wt" fetch -q origin "refs/heads/${default}:refs/remotes/origin/${default}"
   git -C "$wt" checkout -qb "$br" "origin/${default}"
   mkdir -p "$(dirname "$wt/$file")"
-  printf 'e2e %s\n' "$br" > "$wt/$file"
+  printf 'e2e %s\n' "$br" >"$wt/$file"
   git -C "$wt" add "$file"
   git -C "$wt" commit -qm "e2e: $br"
   git -C "$wt" push -q origin "HEAD:refs/heads/${br}"
   e2e_register "$br" "$(git -C "$wt" rev-parse HEAD)"
 }
 
+e2e_take_yes "$@"
 trap e2e_refs_cleanup EXIT
 e2e_setup
 
@@ -68,13 +84,13 @@ default="$(sandbox_default_branch)"
 
 issue_url="$(GH_PAGER=cat gh issue create --repo "$SANDBOX_REPO" \
   --title "e2e refs-fixes $(date -u +%Y%m%d%H%M%S)-$$" \
-  --body "ceshi e2e：测 Refs 不关 Issue、Fixes 进入关闭引用。测完即关。")"
+  --body "harness e2e：测 Refs 不关 Issue、Fixes 进入关闭引用。测完即关。不合入 main。")"
 E2E_ISSUE="${issue_url##*/}"
 [[ "$E2E_ISSUE" =~ ^[1-9][0-9]*$ ]] || die "读不到 e2e Issue 号：$issue_url"
 
 br_refs="$(e2e_name refs)"
 e2e_push_from_default "$E2E_TMP/wt" "$br_refs" "e2e-runs/${br_refs}/note.txt" "$default"
-refs_body="$(printf 'ceshi e2e intermediate\n\n%s' "$(draft_issue_ref "$E2E_ISSUE" refs)")"
+refs_body="$(printf 'harness e2e intermediate\n\n%s' "$(e2e_issue_ref "$E2E_ISSUE" refs)")"
 refs_url="$(GH_PAGER=cat gh pr create --repo "$SANDBOX_REPO" --draft \
   --base "$default" --head "$br_refs" \
   --title "e2e refs ${br_refs}" \
@@ -83,7 +99,7 @@ E2E_PR_REFS="${refs_url##*/}"
 
 br_fixes="$(e2e_name fixes)"
 e2e_push_from_default "$E2E_TMP/wt" "$br_fixes" "e2e-runs/${br_fixes}/note.txt" "$default"
-fixes_body="$(printf 'ceshi e2e final\n\n%s' "$(draft_issue_ref "$E2E_ISSUE" fixes)")"
+fixes_body="$(printf 'harness e2e final\n\n%s' "$(e2e_issue_ref "$E2E_ISSUE" fixes)")"
 fixes_url="$(GH_PAGER=cat gh pr create --repo "$SANDBOX_REPO" --draft \
   --base "$default" --head "$br_fixes" \
   --title "e2e fixes ${br_fixes}" \

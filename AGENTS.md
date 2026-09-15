@@ -1,47 +1,38 @@
 # g-lite-harness
 
-外部控制台和 GitHub 测试场。真正改代码的是本机 `qiaoen12/g-lite` clone。
+外部 GitHub 沙箱，不是 g-lite 的运行依赖，也不是开发框架。
+
+日常开发 g-lite 直接使用原生 `git` / `gh`。本仓不管理 Issue / worktree / branch / PR / Review。不要从这里启动 g-lite 开发，不要调用 `ceshi`。
+
+## 正常开发流程
+
+在 g-lite 自己的 clone / worktree：
 
 ```text
-控制仓：/Users/qiaoen/g-lite-harness
-目标仓：/Users/qiaoen/g-lite             （qiaoen12/g-lite）
-worktree：/Users/qiaoen/ceshi-worktrees
-沙箱仓：qiaoen12/g-lite-harness（E2E squash 进 e2e/base，不写 main）
+fetch origin/main
+→ git worktree add
+→ Agent 开发
+→ g-lite 自身测试
+→ git add / commit
+→ committed + clean
+→ 新独立 Agent Review
+→ git push
+→ gh pr create --draft
+→ STOP
+→ human squash merge
 ```
 
-## 每次开工先做
+不要用 g-lite candidate runtime（`new task` / claim / `zdev` / `zreview` / `zmerge` / `zpr`）管理 framework 自己。
+
+## 本仓
+
+只在明确需要真实 GitHub 副作用时运行：
 
 ```bash
-bin/ceshi doctor
-bin/ceshi status
-bin/ceshi start 1           # 或不写号，取队列下一个 OPEN+human-merge
-# 队列：1（g-lite v1.0 提取）
+bash tests/e2e/facts-squash.sh --yes
+bash tests/e2e/facts-lease.sh --yes
+bash tests/e2e/refs-fixes.sh --yes
+bash tests/e2e/zmerge-delete.sh --yes --sut /path/to/g-lite
 ```
 
-然后 `cd` 到打印出来的 worktree，用普通 git 改目标仓。
-
-## 禁止
-
-- 不要用目标仓**候选** runtime 的 `new task approve` / claim / `zdev` / `zreview` / `zmerge` / `zsync` / `zpr` 管理框架自己。g-lite#1 bootstrap 时 main 还没有 runtime，不要强行 approve。
-- 不要通过 GitHub API 一行一行改 `qiaoen12/g-lite`。
-- 不要在 `/Users/qiaoen/Projects2-worktrees` 里的 Orca 树上做 G-lite。
-- 不要把目标仓代码搬进 g-lite-harness。
-- 真实 GitHub 破坏性测试只打 `qiaoen12/g-lite-harness` 的 `e2e/*` 分支。
-
-## 允许
-
-```text
-git worktree / commit / push
-gh pr create --draft          # 41a/b：ceshi draft n --refs；41c / 单 PR：--fixes
-bin/ceshi test local|facts|zmerge
-AI 审查（本控制台的 review，不是 zreview）
-稳定 main 主工作区：0-meta/bin/new task approve <n>
-停
-人确认后，人工 squash merge
-```
-
-`zreview` 可以当辅助对照，不能当放行。`zmerge` 禁止用于框架自己。
-
-## 停
-
-Draft PR 和审查之后必须停。不要 squash merge `qiaoen12/g-lite`。等人看完契约、diff、夹具和 g-lite-harness 真实 GitHub 结果。
+只写 `qiaoen12/g-lite-harness` 的 `e2e/*`，squash 只进 `e2e/base`。不写 g-lite main，不 merge Harness main。Draft PR 和审查之后 STOP，由人 squash merge。
