@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Thin local-test dispatcher. Not a Product lifecycle CLI.
+set -Eeuo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+usage() {
+  cat <<'EOF'
+用法：bin/ceshi test local <issue>
+
+只调度本仓 tests/local/<issue>.sh。不创建 worktree、不 claim、不管理 framework 生命周期。
+
+  bin/ceshi test local 15
+EOF
+}
+
+case "${1:-}" in
+  test)
+    [ "${2:-}" = local ] || { usage >&2; exit 2; }
+    n="${3:-}"
+    [[ "$n" =~ ^[1-9][0-9]*$ ]] || { usage >&2; exit 2; }
+    script="$HERE/tests/local/${n}.sh"
+    [ -f "$script" ] || {
+      echo "没有 #${n} local test entry：$script" >&2
+      exit 2
+    }
+    exec bash "$script"
+    ;;
+  -h|--help|help|"")
+    usage
+    ;;
+  start|claim|review|queue)
+    echo "Harness 不管理 Product worktree / branch / claim / Review。请用 vanilla git。" >&2
+    exit 2
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

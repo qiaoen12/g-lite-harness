@@ -2,7 +2,9 @@
 
 `qiaoen12/g-lite` 的外部 GitHub 沙箱。**不是 g-lite 的运行依赖，也不是开发框架。**
 
-日常开发 g-lite 直接使用原生 `git` / `gh`。本仓不管理 Issue、worktree、branch、PR 或 Review。没有 `ceshi` 生命周期 CLI。
+日常开发 g-lite 直接使用原生 `git` / `gh`。本仓不管理 Issue、worktree、branch、PR 或 Review。没有生命周期 CLI。
+
+`bin/ceshi test local <n>` 只调度 `tests/local/<n>.sh`（例如 #15 的 Product bootstrap / 相关回归）。不创建 worktree，不 claim。SUT 可用 `CESHI_SUT` 指定。
 
 ## 日常开发 g-lite
 

@@ -2,7 +2,9 @@
 
 外部 GitHub 沙箱，不是 g-lite 的运行依赖，也不是开发框架。
 
-日常开发 g-lite 直接使用原生 `git` / `gh`。本仓不管理 Issue / worktree / branch / PR / Review。不要从这里启动 g-lite 开发，不要调用 `ceshi`。
+日常开发 g-lite 直接使用原生 `git` / `gh`。本仓不管理 Issue / worktree / branch / PR / Review。不要从这里启动 g-lite 开发。
+
+`bin/ceshi test local <n>` 只调度本仓 `tests/local/<n>.sh`，不是生命周期 CLI。不要用它 start / claim / review / merge。
 
 ## 正常开发流程
 

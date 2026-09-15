@@ -7,7 +7,7 @@ alwaysApply: true
 
 本仓不是 g-lite 的运行依赖，也不是开发框架。日常开发 g-lite 直接使用原生 `git` / `gh`。
 
-不要管理 Issue / worktree / branch / PR / Review。本仓没有开发生命周期 CLI。
+不要管理 Issue / worktree / branch / PR / Review。本仓没有开发生命周期 CLI。`bin/ceshi test local <n>` 只调度 `tests/local/<n>.sh`。
 
 正常路径：
 
