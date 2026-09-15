@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
-# 中间 PR 用 Refs，不进入 closingIssuesReferences；final 用 Fixes，会进入。
-# GitHub 只对打向默认分支的 PR 填关闭引用。本测试开 Draft、不合入 main。
+# Refs 不进入 closingIssuesReferences；Fixes 会进入。Draft 打默认分支，不合入 main。
+# 直接运行：bash tests/e2e/refs-fixes.sh --yes
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-# shellcheck source=../lib/bootstrap.sh
-. "$ROOT/tests/lib/bootstrap.sh"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=/dev/null
+. "$ROOT/lib/common.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/parse.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/github.sh"
+# shellcheck source=/dev/null
+. "$ROOT/tests/e2e/lib.sh"
 
 E2E_ISSUE=""
 E2E_PR_REFS=""
@@ -29,50 +35,31 @@ e2e_closing_numbers() {
 }
 
 e2e_refs_cleanup() {
-  local test_rc=$? close_rc=0
+  local test_rc=$?
   if [ -n "${E2E_PR_REFS:-}" ]; then
-    if ! GH_PAGER=cat gh pr close "$E2E_PR_REFS" --repo "$SANDBOX_REPO" >/dev/null; then
-      printf 'LEFTOVER pr=%s (refs)\n' "$E2E_PR_REFS" >&2
-      printf 'RECOVERY: gh pr close %s --repo %s\n' "$E2E_PR_REFS" "$SANDBOX_REPO" >&2
-      close_rc=1
-    fi
+    GH_PAGER=cat gh pr close "$E2E_PR_REFS" --repo "$SANDBOX_REPO" >/dev/null \
+      || printf 'LEFTOVER pr=%s\nRECOVERY: gh pr close %s --repo %s\n' \
+        "$E2E_PR_REFS" "$E2E_PR_REFS" "$SANDBOX_REPO" >&2
   fi
   if [ -n "${E2E_PR_FIXES:-}" ]; then
-    if ! GH_PAGER=cat gh pr close "$E2E_PR_FIXES" --repo "$SANDBOX_REPO" >/dev/null; then
-      printf 'LEFTOVER pr=%s (fixes)\n' "$E2E_PR_FIXES" >&2
-      printf 'RECOVERY: gh pr close %s --repo %s\n' "$E2E_PR_FIXES" "$SANDBOX_REPO" >&2
-      close_rc=1
-    fi
+    GH_PAGER=cat gh pr close "$E2E_PR_FIXES" --repo "$SANDBOX_REPO" >/dev/null \
+      || printf 'LEFTOVER pr=%s\nRECOVERY: gh pr close %s --repo %s\n' \
+        "$E2E_PR_FIXES" "$E2E_PR_FIXES" "$SANDBOX_REPO" >&2
   fi
   if [ -n "${E2E_ISSUE:-}" ]; then
-    if ! GH_PAGER=cat gh issue close "$E2E_ISSUE" --repo "$SANDBOX_REPO" \
-      --comment "harness e2e cleanup" >/dev/null; then
-      printf 'LEFTOVER issue=%s\n' "$E2E_ISSUE" >&2
-      printf 'RECOVERY: gh issue close %s --repo %s\n' "$E2E_ISSUE" "$SANDBOX_REPO" >&2
-      close_rc=1
-    fi
+    GH_PAGER=cat gh issue close "$E2E_ISSUE" --repo "$SANDBOX_REPO" \
+      --comment "harness e2e cleanup" >/dev/null \
+      || printf 'LEFTOVER issue=%s\nRECOVERY: gh issue close %s --repo %s\n' \
+        "$E2E_ISSUE" "$E2E_ISSUE" "$SANDBOX_REPO" >&2
   fi
-  e2e_cleanup || close_rc=1
-  if [ -n "${HARNESS_EVIDENCE:-}" ]; then
-    if ! harness_evidence_write "$HARNESS_EVIDENCE"; then
-      printf 'evidence 写入失败：%s\n' "$HARNESS_EVIDENCE" >&2
-    fi
-  fi
-  if [ "$test_rc" -ne 0 ]; then
-    exit "$test_rc"
-  fi
-  if [ "$close_rc" -ne 0 ]; then
-    printf 'cleanup 失败。残留：pr=%s,%s issue=%s leftover=%s\n' \
-      "${E2E_PR_REFS:-}" "${E2E_PR_FIXES:-}" "${E2E_ISSUE:-}" "${HARNESS_LEFTOVER:-}" >&2
-    exit 1
-  fi
-  exit 0
+  e2e_cleanup || printf 'branch cleanup 有残留，见上方 LEFTOVER\n' >&2
+  exit "$test_rc"
 }
 
 e2e_push_from_default() {
   local wt="$1" br="$2" file="$3" default="$4"
-  harness_require_e2e_branch "$br"
-  harness_e2e_reject_if_remote_exists "$wt" "$br"
+  require_e2e_branch "$br"
+  e2e_refuse_existing "$wt" "$br"
   git -C "$wt" fetch -q origin "refs/heads/${default}:refs/remotes/origin/${default}"
   git -C "$wt" checkout -qb "$br" "origin/${default}"
   mkdir -p "$(dirname "$wt/$file")"
@@ -83,10 +70,9 @@ e2e_push_from_default() {
   e2e_register "$br" "$(git -C "$wt" rev-parse HEAD)"
 }
 
-HARNESS_SCENE="${HARNESS_SCENE:-refs-fixes}"
+e2e_take_yes "$@"
 trap e2e_refs_cleanup EXIT
 e2e_setup
-HARNESS_EVIDENCE="$(harness_evidence_file)"
 
 default="$(sandbox_default_branch)"
 [ -n "$default" ] || die "读不到沙箱默认分支"

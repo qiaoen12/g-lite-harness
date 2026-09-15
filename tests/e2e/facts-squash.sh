@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
-# GitHub squash 的真实语义：任务分支 tip 不在 e2e/base 历史上。
+# GitHub squash 真实语义：任务分支 tip 不在 e2e/base 历史上。
+# 直接运行：bash tests/e2e/facts-squash.sh --yes
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-# shellcheck source=../lib/bootstrap.sh
-. "$ROOT/tests/lib/bootstrap.sh"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=/dev/null
+. "$ROOT/lib/common.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/parse.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/github.sh"
+# shellcheck source=/dev/null
+. "$ROOT/tests/e2e/lib.sh"
 
-HARNESS_SCENE="${HARNESS_SCENE:-facts-squash}"
-trap e2e_on_exit EXIT
+e2e_take_yes "$@"
+trap e2e_cleanup EXIT
 e2e_setup
-HARNESS_EVIDENCE="$(harness_evidence_file)"
 
 br="$(e2e_name squash)"
 e2e_push_branch "$E2E_TMP/wt" "$br" "e2e-runs/${br}/note.txt"
@@ -30,5 +36,4 @@ e2e_expect_true "远端任务分支仍在" \
 
 echo
 echo "事实：squash 之后 tip=${tip:0:12} 不在 e2e/base 历史上，mergeCommit=${merge_oid:0:12} 在。"
-echo "只认 merge-base --is-ancestor 的 finalize 会在这里拒绝删分支。"
 e2e_finish

@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
-# 精确 lease：读到的 tip 被推进后，不得删成无 lease。
+# 精确 lease：tip 被推进后，不得无 lease 删除。
+# 直接运行：bash tests/e2e/facts-lease.sh --yes
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-# shellcheck source=../lib/bootstrap.sh
-. "$ROOT/tests/lib/bootstrap.sh"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=/dev/null
+. "$ROOT/lib/common.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/parse.sh"
+# shellcheck source=/dev/null
+. "$ROOT/lib/github.sh"
+# shellcheck source=/dev/null
+. "$ROOT/tests/e2e/lib.sh"
 
-HARNESS_SCENE="${HARNESS_SCENE:-facts-lease}"
-trap e2e_on_exit EXIT
+e2e_take_yes "$@"
+trap e2e_cleanup EXIT
 e2e_setup
-HARNESS_EVIDENCE="$(harness_evidence_file)"
 
 br="$(e2e_name lease)"
 e2e_push_branch "$E2E_TMP/wt" "$br" "e2e-runs/${br}/note.txt"
@@ -39,7 +45,7 @@ e2e_expect_eq "推进后的 tip 仍在" "$new_tip" "$now"
 
 git -C "$E2E_TMP/wt" push --porcelain \
   --force-with-lease="refs/heads/${br}:${new_tip}" \
-  origin ":refs/heads/${br}" >"$E2E_TMP/lease-ok.out" 2>"$E2E_TMP/lease-ok.err"
+  origin ":refs/heads/${br}" >"$E2E_TMP/lease-ok.out"
 e2e_forget "$br"
 e2e_expect_true "正确 lease 可以删除" \
   '! git -C "$E2E_TMP/wt" ls-remote --exit-code origin "refs/heads/${br}" >/dev/null 2>&1'

@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
-# 兼容旧 tests/e2e/run.sh。转给 tests/run.sh。
+# 可选串跑。叶子脚本也可单独执行。
 set -Eeuo pipefail
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd)"
 kind="${1:-facts}"
 shift || true
 case "$kind" in
-  facts) exec bash "$HERE/../run.sh" facts "$@" ;;
-  zmerge) exec bash "$HERE/../run.sh" zmerge-delete "$@" ;;
+  facts)
+    bash "$HERE/facts-squash.sh" "$@"
+    bash "$HERE/facts-lease.sh" "$@"
+    bash "$HERE/refs-fixes.sh" "$@"
+    ;;
+  zmerge)
+    bash "$HERE/zmerge-delete.sh" "$@"
+    ;;
   *)
-    echo "用法：run.sh facts|zmerge  （新入口 tests/run.sh）" >&2
+    echo "用法：tests/e2e/run.sh facts --yes | zmerge --yes --sut PATH" >&2
     exit 2
     ;;
 esac

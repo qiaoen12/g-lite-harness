@@ -256,8 +256,18 @@ cmd_stop() {
 }
 
 cmd_test() {
-  # 过渡接线：测试入口已独立。生命周期查找 worktree / 队列的逻辑不再参与。
-  bash "$CESHI_ROOT/tests/run.sh" "$@"
+  local kind="${1:-}" 
+  shift || true
+  case "$kind" in
+    helpers)
+      bash "$CESHI_ROOT/tests/helpers/parse.test.sh"
+      bash "$CESHI_ROOT/tests/helpers/guard.test.sh"
+      ;;
+    local) cmd_test_local "$@" ;;
+    facts) cmd_test_facts "$@" ;;
+    zmerge) cmd_test_zmerge "$@" ;;
+    *) die "用法：ceshi test helpers|local|facts|zmerge" ;;
+  esac
 }
 
 run_new_check_commit() {
@@ -310,24 +320,6 @@ cmd_test_local() {
       fi
       run_new_check_commit "$wt"
       ;;
-    13)
-      if [ -f "$wt/0-meta/lib/new/completion.test.sh" ]; then
-        (cd "$wt" && bash 0-meta/lib/new/completion.test.sh)
-      fi
-      run_new_check_commit "$wt"
-      ;;
-    14)
-      if [ -f "$wt/0-meta/lib/new/guard.test.sh" ]; then
-        (cd "$wt" && bash 0-meta/lib/new/guard.test.sh)
-      fi
-      if [ -f "$wt/0-meta/lib/new/guard-issue14.test.sh" ]; then
-        (cd "$wt" && bash 0-meta/lib/new/guard-issue14.test.sh)
-      fi
-      if [ -f "$wt/.agents/skills/zmerge/scripts/check-guard-recovery.sh" ]; then
-        (cd "$wt" && bash .agents/skills/zmerge/scripts/check-guard-recovery.sh)
-      fi
-      run_new_check_commit "$wt"
-      ;;
     28|29|30|31)
       run_new_check_commit "$wt"
       ;;
@@ -339,6 +331,7 @@ take_yes() {
   for a in "$@"; do
     if [ "$a" = --yes ]; then
       CESHI_YES=1
+      export CESHI_YES
     fi
   done
 }
@@ -348,14 +341,14 @@ cmd_test_facts() {
   require_sandbox_repo
   require_e2e_confirm
   sandbox_has_e2e_base || die "沙箱 ${SANDBOX_REPO} 没有 ${SANDBOX_MAIN}"
-  bash "$CESHI_ROOT/tests/e2e/run.sh" facts
+  bash "$CESHI_ROOT/tests/e2e/run.sh" facts --yes
 }
 
 cmd_test_zmerge() {
   local n="" a
   for a in "$@"; do
     case "$a" in
-      --yes) CESHI_YES=1 ;;
+      --yes) CESHI_YES=1; export CESHI_YES ;;
       *) n="$a" ;;
     esac
   done
@@ -370,7 +363,7 @@ cmd_test_zmerge() {
   export CESHI_SUT_CODE
   echo "删除函数来自：$CESHI_SUT_CODE"
   echo "范围：zmerge_delete_remote_branch 的真实 GitHub 集成测试，不是完整 zmerge_run。"
-  bash "$CESHI_ROOT/tests/e2e/run.sh" zmerge
+  bash "$CESHI_ROOT/tests/e2e/run.sh" zmerge --yes --sut "$CESHI_SUT_CODE"
 }
 
 cmd_next() {
