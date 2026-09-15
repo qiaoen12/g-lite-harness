@@ -59,11 +59,15 @@ ceshi <命令>
                       --refs 只关联不关 Issue（#41a/b）；默认 --fixes 合入后关 Issue（#41c 与单 PR 任务）
   review <n>          打印审查卡（不是 zreview，不放行合并）
   stop                打印人工停止点
-  test helpers        解析器自测，不上网
-  test local [n]      在目标 worktree 跑夹具
-  test facts          在 qiaoen12/g-lite-harness 上测真实 squash / lease
-  test zmerge [n]     真实 GitHub 上测 zmerge_delete_remote_branch（不是完整 zmerge_run）
+  test helpers|result|dispatch|sandbox-local|selfcheck
+                      Harness 自检，不读 Issue 队列
+  test local --suite NAME --sut PATH
+  test facts --yes    真实 squash / lease / Refs-Fixes
+  test zmerge --sut PATH --yes
+                      zmerge_delete_remote_branch（不是完整 zmerge_run）
   next                开工队列里下一个未关闭 Issue
+
+测试主入口是 tests/run.sh。对照表：tests/MIGRATION.md。
 
 目标仓只许本地改。破坏性 E2E 只 squash 进 qiaoen12/g-lite-harness 的 e2e/base。
 EOF

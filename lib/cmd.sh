@@ -256,18 +256,8 @@ cmd_stop() {
 }
 
 cmd_test() {
-  local kind="${1:-}" 
-  shift || true
-  case "$kind" in
-    helpers)
-      bash "$CESHI_ROOT/tests/helpers/parse.test.sh"
-      bash "$CESHI_ROOT/tests/helpers/guard.test.sh"
-      ;;
-    local) cmd_test_local "$@" ;;
-    facts) cmd_test_facts "$@" ;;
-    zmerge) cmd_test_zmerge "$@" ;;
-    *) die "用法：ceshi test helpers|local|facts|zmerge" ;;
-  esac
+  # 过渡接线：测试入口已独立。生命周期查找 worktree / 队列的逻辑不再参与。
+  bash "$CESHI_ROOT/tests/run.sh" "$@"
 }
 
 run_new_check_commit() {

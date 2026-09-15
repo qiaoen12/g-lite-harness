@@ -1,20 +1,15 @@
 #!/usr/bin/env bash
-# GitHub squash 的真实语义：任务分支 tip 不在 main 历史上。
-# #38 的契约把「已合入」写成了 git 祖先检查，夹具用 merge 进 main 的 tip 绿了，这里会红。
+# GitHub squash 的真实语义：任务分支 tip 不在 e2e/base 历史上。
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-# shellcheck source=/dev/null
-. "$ROOT/lib/common.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/parse.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/github.sh"
-# shellcheck source=/dev/null
-. "$ROOT/tests/e2e/lib.sh"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=../lib/bootstrap.sh
+. "$ROOT/tests/lib/bootstrap.sh"
 
-trap e2e_cleanup EXIT
+HARNESS_SCENE="${HARNESS_SCENE:-facts-squash}"
+trap e2e_on_exit EXIT
 e2e_setup
+HARNESS_EVIDENCE="$(harness_evidence_file)"
 
 br="$(e2e_name squash)"
 e2e_push_branch "$E2E_TMP/wt" "$br" "e2e-runs/${br}/note.txt"
