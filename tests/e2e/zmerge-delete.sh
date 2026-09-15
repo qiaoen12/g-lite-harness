@@ -1,23 +1,17 @@
 #!/usr/bin/env bash
 # 真实 GitHub 上调用 g-lite 的 zmerge_delete_remote_branch。不是完整 zmerge_run。
 # 直接运行：bash tests/e2e/zmerge-delete.sh --yes --sut /path/to/g-lite
-# 不从 Issue 队列、worktree 名或 g-lite main 推导路径。
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=/dev/null
-. "$ROOT/lib/common.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/parse.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/github.sh"
-# shellcheck source=/dev/null
-. "$ROOT/tests/e2e/lib.sh"
+. "$HERE/lib.sh"
 
-SUT="${CESHI_SUT_CODE:-}"
+SUT=""
+e2e_take_yes "$@"
 while [ $# -gt 0 ]; do
   case "$1" in
-    --yes) CESHI_YES=1; shift ;;
+    --yes) shift ;;
     --sut)
       [ -n "${2:-}" ] || die "zmerge-delete.sh --sut 需要路径"
       SUT="$2"
@@ -26,9 +20,9 @@ while [ $# -gt 0 ]; do
     *) die "用法：zmerge-delete.sh --yes --sut PATH" ;;
   esac
 done
-export CESHI_YES
 
-[ -n "$SUT" ] || die "zmerge-delete.sh 需要 --sut PATH（或 CESHI_SUT_CODE）。不 fallback 到 g-lite main。"
+require_e2e_confirm
+[ -n "$SUT" ] || die "zmerge-delete.sh 需要 --sut PATH。不 fallback 到 g-lite main。"
 MERGE_LIB="$SUT/.agents/skills/zmerge/scripts/merge-lib.sh"
 CORE="$SUT/0-meta/lib/new/core.sh"
 [ -f "$MERGE_LIB" ] || die "找不到 ${MERGE_LIB}。这是 g-lite 输入，不转去改 g-lite。"

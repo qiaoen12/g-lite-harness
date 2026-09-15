@@ -1,0 +1,30 @@
+---
+description: Harness 不是 g-lite 开发依赖；日常用原生 git/gh
+alwaysApply: true
+---
+
+# g-lite-harness
+
+本仓不是 g-lite 的运行依赖，也不是开发框架。日常开发 g-lite 直接使用原生 `git` / `gh`。
+
+不要管理 Issue / worktree / branch / PR / Review。本仓没有开发生命周期 CLI。
+
+正常路径：
+
+```text
+fetch origin/main
+→ git worktree add
+→ Agent 开发
+→ g-lite 自身测试
+→ git add / commit
+→ committed + clean
+→ 新独立 Agent Review
+→ git push
+→ gh pr create --draft
+→ STOP
+→ human squash merge
+```
+
+不要用 g-lite candidate runtime（`new task` / claim / `zdev` / `zreview` / `zmerge` / `zpr`）管理 framework 自己。
+
+真实 GitHub 测试只打 `qiaoen12/g-lite-harness` 的 `e2e/*`，squash 只进 `e2e/base`。必须 `--yes`。不要写 g-lite main，不要自动 merge Harness main。

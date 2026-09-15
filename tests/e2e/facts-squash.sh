@@ -3,15 +3,9 @@
 # 直接运行：bash tests/e2e/facts-squash.sh --yes
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=/dev/null
-. "$ROOT/lib/common.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/parse.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/github.sh"
-# shellcheck source=/dev/null
-. "$ROOT/tests/e2e/lib.sh"
+. "$HERE/lib.sh"
 
 e2e_take_yes "$@"
 trap e2e_cleanup EXIT

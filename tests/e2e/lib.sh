@@ -1,10 +1,23 @@
 # 四个 E2E 叶子脚本共用的克隆 / 登记 / 清理。不是通用测试框架。
 # 只打 qiaoen12/g-lite-harness 的 e2e/*，squash 只进 e2e/base。
 
+# 身份写死。环境变量改不了。
+SANDBOX_REPO="qiaoen12/g-lite-harness"
+SANDBOX_MAIN="e2e/base"
+E2E_BRANCH_PREFIX="e2e/"
+
 E2E_TMP=""
 E2E_BRANCHES=""
 E2E_PASS=0
 E2E_FAIL=0
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+e2e_pin_identity() {
+  SANDBOX_REPO="qiaoen12/g-lite-harness"
+  SANDBOX_MAIN="e2e/base"
+  E2E_BRANCH_PREFIX="e2e/"
+}
 
 e2e_ok() { E2E_PASS=$((E2E_PASS+1)); printf 'ok  %s\n' "$*"; }
 e2e_bad() { E2E_FAIL=$((E2E_FAIL+1)); printf 'not ok  %s\n' "$*" >&2; }
@@ -21,12 +34,72 @@ e2e_expect_true() {
 
 e2e_take_yes() {
   local a
+  E2E_YES=
   for a in "$@"; do
     if [ "$a" = --yes ]; then
-      CESHI_YES=1
+      E2E_YES=1
     fi
   done
-  export CESHI_YES
+  export E2E_YES
+}
+
+require_e2e_confirm() {
+  if [ "${E2E_YES:-}" = 1 ]; then
+    return 0
+  fi
+  die "真实 GitHub 测试会改 qiaoen12/g-lite-harness 的 e2e/*（squash 进 e2e/base）。加上 --yes"
+}
+
+branch_ok() {
+  [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || return 1
+  [ "$1" != main ] || return 1
+  [ "$1" != HEAD ] || return 1
+}
+
+require_e2e_branch() {
+  local br="$1"
+  e2e_pin_identity
+  case "$br" in
+    "${E2E_BRANCH_PREFIX}"*) ;;
+    *) die "拒绝操作非 ${E2E_BRANCH_PREFIX} 分支：${br}" ;;
+  esac
+  [ "$br" != "$SANDBOX_MAIN" ] || die "拒绝操作持久 base：${SANDBOX_MAIN}"
+  branch_ok "$br" || die "非法分支名：${br}"
+}
+
+sandbox_name_with_owner() {
+  GH_PAGER=cat gh repo view "$SANDBOX_REPO" --json nameWithOwner -q .nameWithOwner
+}
+
+sandbox_default_branch() {
+  GH_PAGER=cat gh repo view "$SANDBOX_REPO" --json defaultBranchRef \
+    -q .defaultBranchRef.name
+}
+
+sandbox_has_e2e_base() {
+  local sha
+  sha="$(GH_PAGER=cat gh api "repos/${SANDBOX_REPO}/git/ref/heads/${SANDBOX_MAIN}" \
+    --jq .object.sha 2>/dev/null)" || return 1
+  [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+}
+
+require_sandbox_repo() {
+  local got
+  e2e_pin_identity
+  [ "$SANDBOX_REPO" = qiaoen12/g-lite-harness ] \
+    || die "破坏性 E2E 只允许 qiaoen12/g-lite-harness"
+  [ "$SANDBOX_MAIN" = e2e/base ] \
+    || die "破坏性 E2E 只允许 squash 进 e2e/base"
+  [ "$E2E_BRANCH_PREFIX" = 'e2e/' ] \
+    || die "破坏性 E2E 只允许 e2e/* 分支"
+  got="$(sandbox_name_with_owner)" || die "读不到沙箱仓 qiaoen12/g-lite-harness"
+  [ "$got" = qiaoen12/g-lite-harness ] \
+    || die "沙箱仓实际是 ${got}，必须是 qiaoen12/g-lite-harness"
+}
+
+e2e_name() {
+  local kind="$1"
+  printf '%s%s-%s-%s\n' "$E2E_BRANCH_PREFIX" "$kind" "$(date -u +%Y%m%d%H%M%S)" "$$"
 }
 
 e2e_clone_url() {
@@ -34,6 +107,10 @@ e2e_clone_url() {
 }
 
 e2e_setup() {
+  command -v git >/dev/null 2>&1 || die "找不到 git"
+  command -v gh >/dev/null 2>&1 || die "找不到 gh"
+  command -v jq >/dev/null 2>&1 || die "找不到 jq"
+  e2e_pin_identity
   require_e2e_confirm
   require_sandbox_repo
   sandbox_has_e2e_base || die "沙箱 ${SANDBOX_REPO}/${SANDBOX_MAIN} 不存在"
@@ -163,6 +240,7 @@ e2e_push_branch() {
 e2e_pr_squash_keep_branch() {
   local br="$1" title="$2" url num tip json oid i
   require_e2e_branch "$br"
+  e2e_pin_identity
   [ "$SANDBOX_REPO" = qiaoen12/g-lite-harness ] || die "squash 只允许 qiaoen12/g-lite-harness"
   [ "$SANDBOX_MAIN" = e2e/base ] || die "squash 只允许进入 e2e/base"
   url="$(GH_PAGER=cat gh pr create --repo "$SANDBOX_REPO" \

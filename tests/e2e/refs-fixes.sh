@@ -3,19 +3,23 @@
 # 直接运行：bash tests/e2e/refs-fixes.sh --yes
 set -Eeuo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=/dev/null
-. "$ROOT/lib/common.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/parse.sh"
-# shellcheck source=/dev/null
-. "$ROOT/lib/github.sh"
-# shellcheck source=/dev/null
-. "$ROOT/tests/e2e/lib.sh"
+. "$HERE/lib.sh"
 
 E2E_ISSUE=""
 E2E_PR_REFS=""
 E2E_PR_FIXES=""
+
+e2e_issue_ref() {
+  local n="$1" kind="$2"
+  [[ "$n" =~ ^[1-9][0-9]*$ ]] || die "非法 Issue 号：${n}"
+  case "$kind" in
+    refs) printf 'Refs #%s\n' "$n" ;;
+    fixes) printf 'Fixes #%s\n' "$n" ;;
+    *) die "关联必须是 refs 或 fixes" ;;
+  esac
+}
 
 e2e_closing_numbers() {
   local pr="$1" owner name
@@ -86,7 +90,7 @@ E2E_ISSUE="${issue_url##*/}"
 
 br_refs="$(e2e_name refs)"
 e2e_push_from_default "$E2E_TMP/wt" "$br_refs" "e2e-runs/${br_refs}/note.txt" "$default"
-refs_body="$(printf 'harness e2e intermediate\n\n%s' "$(draft_issue_ref "$E2E_ISSUE" refs)")"
+refs_body="$(printf 'harness e2e intermediate\n\n%s' "$(e2e_issue_ref "$E2E_ISSUE" refs)")"
 refs_url="$(GH_PAGER=cat gh pr create --repo "$SANDBOX_REPO" --draft \
   --base "$default" --head "$br_refs" \
   --title "e2e refs ${br_refs}" \
@@ -95,7 +99,7 @@ E2E_PR_REFS="${refs_url##*/}"
 
 br_fixes="$(e2e_name fixes)"
 e2e_push_from_default "$E2E_TMP/wt" "$br_fixes" "e2e-runs/${br_fixes}/note.txt" "$default"
-fixes_body="$(printf 'harness e2e final\n\n%s' "$(draft_issue_ref "$E2E_ISSUE" fixes)")"
+fixes_body="$(printf 'harness e2e final\n\n%s' "$(e2e_issue_ref "$E2E_ISSUE" fixes)")"
 fixes_url="$(GH_PAGER=cat gh pr create --repo "$SANDBOX_REPO" --draft \
   --base "$default" --head "$br_fixes" \
   --title "e2e fixes ${br_fixes}" \

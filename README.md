@@ -1,50 +1,53 @@
 # g-lite-harness
 
-`qiaoen12/g-lite` 的外部控制台和 GitHub 沙箱。不是生产依赖。
+`qiaoen12/g-lite` 的外部 GitHub 沙箱。**不是 g-lite 的运行依赖，也不是开发框架。**
 
-不是把目标仓搬到这里开发。AI 从这里启动，改的是本机 `/Users/qiaoen/g-lite` 的 worktree。
+日常开发 g-lite 直接使用原生 `git` / `gh`。本仓不管理 Issue、worktree、branch、PR 或 Review。没有 `ceshi` 生命周期 CLI。
+
+## 日常开发 g-lite
+
+在 g-lite 自己的 clone / worktree 里做：
 
 ```text
-g-lite-harness                控制脚本、提示词、E2E
-        │
-        ▼
-/Users/qiaoen/g-lite          目标仓 main（qiaoen12/g-lite）
-/Users/qiaoen/ceshi-worktrees 本控制台建的任务树
-        │
-        ├─ 本地夹具
-        ├─ g-lite-harness 上真实 squash / lease / refs
-        └─ 目标仓 Draft PR → 审查 → 【停】→ 人 squash merge
+fetch origin/main
+→ git worktree add
+→ Agent 开发
+→ g-lite 自身测试
+→ git add / commit
+→ committed + clean
+→ 新独立 Agent Review
+→ git push
+→ gh pr create --draft
+→ STOP
+→ human squash merge
 ```
 
-当前队列：`g-lite#1`（从 Project-qiaoen Freeze SHA 提取 v1.0 candidate）。
+不要用 g-lite 的 candidate runtime（`new task` / claim / `zdev` / `zreview` / `zmerge` / `zpr`）管理 framework 自己。
 
-## 命令
+## 本仓只做什么
+
+需要验证真实 GitHub 副作用时，才运行少量叶子脚本。必须显式 `--yes`：
 
 ```bash
-bin/ceshi doctor
-bin/ceshi status
-bin/ceshi start 41
-bin/ceshi test local 41
-bin/ceshi test facts --yes
-bin/ceshi draft 41 --refs      # 41a / 41b：合入不关 Issue
-bin/ceshi draft 41 --fixes     # 41c：final，合入后关 Issue
-bin/ceshi review 41
-bin/ceshi stop
+bash tests/e2e/facts-squash.sh --yes
+bash tests/e2e/facts-lease.sh --yes
+bash tests/e2e/refs-fixes.sh --yes
+bash tests/e2e/zmerge-delete.sh --yes --sut /path/to/g-lite
 ```
 
-`test facts` / `test zmerge` 在 `qiaoen12/g-lite-harness` 上开临时 `e2e/*` 分支，squash 进 `e2e/base`，不写 `g-lite-harness/main`，也不碰 `qiaoen12/g-lite` 的 main。`test facts` 另开 Refs/Fixes PR，用 GraphQL 关闭引用证明中间 PR 不关 Issue。`SUT_REPO` / `SANDBOX_REPO` / 对应主分支都写死，环境变量改不了。
+| 脚本 | 为什么必须留在 Harness |
+| --- | --- |
+| `facts-squash.sh` | GitHub squash 后 tip 不在 `e2e/base` 历史上 |
+| `facts-lease.sh` | 远端 `force-with-lease` 与 tip 漂移 |
+| `refs-fixes.sh` | `closingIssuesReferences` 是 GitHub 默认分支行为 |
+| `zmerge-delete.sh` | 对真实 squash/lease 调用 g-lite 的 `zmerge_delete_remote_branch` |
 
-`start` / `draft` / `review` 要求 Issue 仍是 OPEN 且带 GitHub 标签 `human-merge`。`review` 还要求恰好一个 Draft PR，且 `headRefOid` 等于 worktree HEAD。
+安全边界写死：
 
-`ceshi draft <n>` 默认 `--fixes`。#41a/b 必须 `--refs`。
+- 只写 `qiaoen12/g-lite-harness`
+- 临时分支仅 `e2e/*`
+- squash 只进入 `e2e/base`
+- 不写 `g-lite` main，不写 consumer，不自动 merge Harness main
+- tip 漂移不强删远端分支
 
-G-lite 队列默认 `1`。g-lite#1 bootstrap 时 main 还没有 runtime，不要跑 `new task approve`。候选 worktree 不得用候选 runtime 给自己 claim / review / merge。
-
-## 本机覆盖
-
-`config.local.sh`（已忽略）只能改 `SUT_ROOT` 和 `SUT_WORKTREES`。
-
-```bash
-SUT_ROOT=/Users/qiaoen/g-lite
-SUT_WORKTREES=/Users/qiaoen/ceshi-worktrees
-```
+`zmerge-delete.sh` 不是完整 `zmerge_run`。SUT 路径必须显式给出。
