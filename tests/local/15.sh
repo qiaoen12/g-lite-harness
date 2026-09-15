@@ -22,7 +22,8 @@ fail=0
 run() {
   local name="$1"
   echo "===== $name ====="
-  if ! bash "$LIB/$name"; then
+  # 部分 Product 测试用 git rev-parse --show-toplevel 当 ROOT，必须在 SUT 里跑。
+  if ! (cd "$SUT" && bash "$LIB/$name"); then
     echo "FAIL $name" >&2
     fail=1
   fi
